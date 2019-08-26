@@ -4,3 +4,4 @@ MR_phasing stands for Molecular Replacement Automated Phasing Pipeline. It inclu
 
 Se_SAD_phasing stands for the Single-wavelength anomalous dispersion Automated Phasing Pipeline with heavy atoms of Selenium (Se). It includes 3 seapareted modules: SHELXC/D, Crank2, and Phenix Autobuild. Case including Sulfur (S), weaker signal, will be tested this week. 
 
+Examples contain the SAD example of Streptavidin and the MR example of 4N5R which is a lysozyme example.
