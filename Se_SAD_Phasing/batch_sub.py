@@ -131,7 +131,7 @@ if max_DSUL > 0 and atomType == 'S':
                     os.chdir(original_path)
 
 #Do not consider DSUl parameter
-elif max_DSUL == 0 or atomeType != 'S':
+elif max_DSUL == 0 or atomType != 'S':
     print ('0 disulfide bond found or the atom type you are looking for is not Sulfur. Do not consider the grid search for disulfied number')
     for thre in thre_range:
         for resolution in resolution_range:
