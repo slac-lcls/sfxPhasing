@@ -13,17 +13,26 @@ if os.path.isfile("autobuild.eff"):
 parser= argparse.ArgumentParser()
 
 parser.add_argument("-rfl","--reflection-mtz", help="input the mtz file of reflection", type = str)
+parser.add_argument("-orfl","--original-reflection-mtz", help="input the original reflection mtz", type = str)
 parser.add_argument("-seq","--sequence-file",help = "input the sequence file", type = str)
 parser.add_argument("-rfff", "--r-free-flag-fraction-parameter", default = 0.1, help='enter the r free flag fraction', type = float)
 parser.add_argument("-nproc", "--number-of-processors", default = 1, help='enter the number of processors', type = int)
+parser.add_argument("-pdb", "--model-pdb", default = "None", help='enter the pdb file', type = str)
 
 
 args = parser.parse_args()
 
+if args.model_pdb:
+    pdbFile = args.model_pdb
 if args.reflection_mtz:
     reflectionFile = args.reflection_mtz
 else:
     print('Please pass reflection file')
+
+if args.original_reflection_mtz:
+    originalReflectionFile = args.original_reflection_mtz
+else:
+    print("Please pass original reflection file to merge")
 
 if args.sequence_file:
     sequenceFile = args.sequence_file
@@ -47,7 +56,7 @@ with open('my_autobuild.eff','r') as f:
 list[0] = '#'
 ################################## Modify mtzfile 
 print('#!/bin/csh -f',file=open("mtz_label_modification.sh", "a"))
-print("mtzutils hklin2 strep.mtz hklin1 "+reflectionFile+" hklout test.mtz << eof",file=open("mtz_label_modification.sh", "a"))
+print("mtzutils hklin2 "+originalReflectionFile+" hklin1 "+reflectionFile+" hklout test.mtz << eof",file=open("mtz_label_modification.sh", "a"))
 print("merge",file=open("mtz_label_modification.sh", "a"))
 print("eof",file=open("mtz_label_modification.sh", "a"))
 print("#",file=open("mtz_label_modification.sh", "a"))
@@ -106,6 +115,10 @@ for i in range(len(list)):
     elif 'clean_up' in list[i]:
         original = list[i].split('=')[1]
         list[i] = list[i].replace(original, ' True ')
+
+    elif ' model ' in list[i]:
+        original = list[i].split('=')[1]
+        list[i] = list[i].replace(original, pdbFile)
 
 for my_string in list:
     print(my_string,file=open("autobuild.eff", "a"))

@@ -19,34 +19,61 @@ if os.path.isfile("all_jobs.txt"):
 parser= argparse.ArgumentParser()
 
 parser.add_argument("-rfl","--reflection-mtz", help="input the mtz file of reflection", type = str)
+parser.add_argument("-hkl","--hkl-file", help="input shelx readeable file", type = str)
 parser.add_argument("-seq","--sequence-file",help = "input the sequence file", type = str)
 parser.add_argument("-FIND", "--number-of-atoms", default = 4, help='enter the number of atoms', type = str)
 parser.add_argument("-resl","--resolution", default = '3.0', help = "input resolution", type = str)
+parser.add_argument("-ESEL","--esel", default = '1.5', help = "input esel", type = str)
+parser.add_argument("-thre","--threshold", default = '0.5', help = "input threshold of occupancy", type = str)
+parser.add_argument("-DSUL","--disulfide", default = '4', help = "number of disulfide", type = str)
+parser.add_argument("-SFAC", "--atom-type", help = "SAD atom type", type = str)
+parser.add_argument("-MIND1","--mind-atom", default = '-3.5', help = "input minimum distance between atoms", type = str)
+parser.add_argument("-MIND2","--mind-symm", default = '2.2',help = "input minimum distance between symmetry", type = str)
+parser.add_argument("-lresl","--low-resolution-cut",default = '999', help = "input low resolution cutoff",type = str)
 
 args = parser.parse_args()
 
 if args.reflection_mtz:
-   reflectionFile = args.reflection_mtz
-   job_name = args.reflection_mtz.replace('.mtz','')
+    reflectionFile = args.reflection_mtz
+    job_name = args.reflection_mtz.replace('.mtz','')
 else:
-   print('Please input the mtz file for SHELXC/D')
-   sys.exit()
+    print('Please input the mtz file for SHELXC/D')
+    sys.exit()
 
 if args.sequence_file:
-   sequenceFile = args.sequence_file
+    sequenceFile = args.sequence_file
 else:
-   print('Please input sequence for crank2')
-   sys.exit()
+    print('Please input sequence for crank2')
+    sys.exit()
 
 if args.resolution:
-   resolution = args.resolution
-
+    resolution = args.resolution
+    
+if args.disulfide:
+    dsul = args.disulfide
+else:
+    dsul = 0
+    
 if args.number_of_atoms:
-   atom_find = args.number_of_atoms
+    atom_find = args.number_of_atoms
 
-shelx_CD = 'python SHELX_script.py  -rfl '+reflectionFile+' -MIND1 -3.5 -MIND2 2.2 -resl '+str(resolution)+' -TEST 0 99 -ESEL 1.5 -SFAC SE -NTRY 1000 -FIND '+str(atom_find)
+if args.atom_type:
+    atomType = args.atom_type
+    
+if args.esel:
+    eSel = args.esel
+    
+shelx_CD = 'python SHELX_script.py  -rfl '+reflectionFile+' -MIND1 '+args.mind_atom+' -MIND2 '+args.mind_symm+' -resl '+str(resolution)+' -lresl '+args.low_resolution_cut+' -TEST 0 99 -ESEL '+eSel+' -SFAC '+atomType+' -NTRY 5000 -FIND '+str(atom_find)+' -DSUL '+str(dsul)+' -thre '+args.threshold
 
 os.system(shelx_CD)
+
+CFOM_list = []
+with open(job_name+'_fa.res','r') as f:
+    for line in f:
+        CFOM_list.append(line.rstrip('\n'))
+for line in CFOM_list:
+    if 'CFOM' in line:
+	CFOM = line.split('CFOM')[-1].replace(' ','')
 
 # To check whether SHELXC/D
 if os.path.isfile(job_name+'_fa_cleaned.pdb'):
@@ -54,58 +81,49 @@ if os.path.isfile(job_name+'_fa_cleaned.pdb'):
 else:
     print('cleaned pdb has not been properly generated')
     os.chdir('../')
-    shutil.rmtree(current_path)
     sys.exit()
 
 # run crank2
-crank2_cl = 'python crank2_script.py -rfl '+reflectionFile+' -pdb '+new_pdb+' -seq '+sequenceFile
+crank2_cl = 'python crank2_script.py -rfl '+reflectionFile+' -pdb '+new_pdb+' -seq '+sequenceFile+' -atype S'
 os.system(crank2_cl)
+
 # check whether crank2 works
 os.chdir('crank2')
 content = open('crank.loggraph','r').read()
 for line  in content.split('\n'):
     if 'The final FOM is' in line:
         FOM = float(line.split('is ')[1])
-        if FOM < 0.4:
-           os.chdir(current_path)
-           os.chdir('..')
-	   shutil.rmtree(current_path)
-	   sys.exit()
+        if FOM < 0.35:
+            os.chdir(current_path)
+            os.chdir('..')
+            sys.exit()
         else:
-	   os.chdir(current_path)
-           print(current_path+'/'+str(FOM),file = open("FOM.txt","a"))
-           if os.path.isfile('result.mtz'):
-	      new_mtz = 'result.mtz'
-	   else:
-	      print("experimental reflection file has not been genereted")
-	      sys.exit()
+            os.chdir(current_path)
+            print(current_path+'/CFOM:'+str(CFOM)+'/FOM:'+str(FOM),file = open("FOM.txt","a"))
+            if os.path.isfile('result.mtz'):
+                new_mtz = 'result.mtz'
+                print("Now it's time to start AutoBuild")
+            else:
+                print("experimental reflection file has not been genereted")
+                sys.exit()
 
-auto_build_cl = 'python autobuild.py -rfl '+new_mtz+' -seq '+sequenceFile+' -rfff 0.05 -nproc 12'
 
-os.system(auto_build_cl)
-
-os.chdir('AutoBuild_run_2_/')
-
-list=[]
-with open('AutoBuild_summary.dat','r') as f:
-    for line in f:
-        list.append(line.rstrip('\n'))
-
-os.chdir('..')
-for i in list:
-    if 'Best solution on cycle' in i:
-        print(os.getcwd()+'/'+i, file = open("best_solution_R_Rfree.txt",'a'))
-
-#run autobuild
-# if os.path.isfile('result.mtz'):
-#     new_mtz = 'result.mtz'
-# else:
-#     print('experimental reflection file has not been properly generated') 
-#     sys.exit()
-
-# auto_build_cl = 'python autobuild.py -rfl '+new_mtz+' -seq '+sequenceFile+' -rfff 0.05 -nproc 4'
+sys.exit()
+#To be deleted
+# auto_build_cl = 'python autobuild.py -rfl '+new_mtz+' -orfl reflectionFile -seq '+sequenceFile+' -rfff 0.05 -nproc 12'
 
 # os.system(auto_build_cl)
 
+# os.chdir('AutoBuild_run_2_/')
+
+# list=[]
+# with open('AutoBuild_summary.dat','r') as f:
+#     for line in f:
+#         list.append(line.rstrip('\n'))
+
+# os.chdir('..')
+# for i in list:
+#     if 'Best solution on cycle' in i:
+#         print(os.getcwd()+'/'+i, file = open("best_solution_R_Rfree.txt",'a'))
 
 

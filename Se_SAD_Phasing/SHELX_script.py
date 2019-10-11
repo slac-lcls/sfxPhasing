@@ -12,13 +12,14 @@ parser= argparse.ArgumentParser()
 parser.add_argument("-rfl","--reflection-mtz", help="input the mtz file of reflection", type = str)
 parser.add_argument("-MIND1","--mind-atom", default = '-3.5', help = "input minimum distance between atoms", type = str)
 parser.add_argument("-MIND2","--mind-symm", default = '2.2',help = "input minimum distance between symmetry", type = str)
+parser.add_argument("-DSUL", "--disulfide-count", default = '0', help = "input disulfide bonds number", type = str)
 parser.add_argument("-resl","--resolution", default = '3.0', help = "input resolution", type = str)
-parser.add_argument("-ESEL", "--minimum-e", default = '1.2', help = 'input Minimum E', type = str)
+parser.add_argument("-lresl","--low-resolution-cut",default = '999', help = "input low resolution cutoff",type = str)
+parser.add_argument("-ESEL", "--minimum-e", default = '1.5', help = 'input Minimum E', type = str)
 parser.add_argument("-TEST", "--test-min-del", nargs='+', help = 'after find define the new starting atom')
 parser.add_argument("-NTRY", "--number-of-try", default = 1000, help = 'enter the number of try', type = int)
 parser.add_argument("-FIND", "--number-of-atoms", default = 4, help='enter the number of atoms', type = str)
 parser.add_argument("-SFAC", "--type-of-atoms", help='enter the type of atom', type = str)
-
 parser.add_argument("-thre","--likelihood-threshold",help = "setup likelihood threshold", type = float)
 
 args = parser.parse_args()
@@ -40,12 +41,9 @@ if args.number_of_try:
 if args.number_of_atoms:
     NOATOM = args.number_of_atoms
 
-
-
 ################################ Deploying SHELXC AND GNENERATE FILES FOR SHELXD ###################################################
 
 # Input xxx_xxx_xx_x.mtz 
-# Generate xxx_xxx_xx_x.sca 
 # Output: 1) xxxxxxxxx.hkl 
 #         2) xxxxxxxxx_fa.hkl
 #         3) xxxxxxxxx_fa.ins
@@ -97,32 +95,36 @@ print(CELL)
 print(SPACE_GROUP)
 #############################################################################################################
 
-########################### Convert mtz to sca ################################
-
+########################### Convert mtz to shelxreadable ################################
+#FREE=FreeRflag
 if os.path.isfile("shelxc.inp"):
     os.remove("shelxc.inp")
+if os.path.isfile("mtz2shelx.sh"):
+    os.remove("mtz2shelx.sh")
+print('#!/bin/csh -f',file=open("mtz2shelx.sh", "a"))
+print("mtz2various hklin "+reflection_file+" hklout shelx_readable.hkl << eof",file=open("mtz2shelx.sh", "a"))
+print("LABIN I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) SIGI(-)=SIGI(-)",file=open("mtz2shelx.sh", "a"))
+print("OUTPUT SHELX",file = open("mtz2shelx.sh", "a"))
+print("eof",file=open("mtz2shelx.sh", "a"))
+print("#",file=open("mtz2shelx.sh", "a"))
+os.system("sh mtz2shelx.sh")
 
-os.system('mtz2sca '+reflection_file)
+shelx_reflection_file = 'shelx_readable.hkl'
 
-reflection_file=reflection_file.replace('.mtz','.sca')
-
-molecule_inp = {'CELL':CELL, 'SPAG':SPACE_GROUP, 'FIND': NOATOM, 'NTRY':NOTRY, 'SFAC':args.type_of_atoms, 'SAD':reflection_file}
+molecule_inp = {'CELL':CELL, 'SPAG':SPACE_GROUP, 'FIND': NOATOM, 'NTRY':NOTRY, 'SFAC':args.type_of_atoms, 'SAD':shelx_reflection_file}
 
 for i in molecule_inp:
     my_string = i + ' ' +json.dumps(molecule_inp[i])
     my_string = my_string.replace('"','')
     print(my_string,file=open("shelxc.inp", "a"))
 
-title_name = reflection_file.replace('.sca','')#.replace('_','')
+title_name = reflection_file.replace('.mtz','')#.replace('_','')
 
-
-##print(job_name)
-
-#print('shelxc '+job_name+' < shelxc.inp')
-
-os.system('shelxc '+title_name+' < shelxc.inp')
-
+#print ('+++++++++++++++++++++++++++++')
+os.system('shelxc '+title_name+' < shelxc.inp > shelxc.log')
+print('SHELXC log has been written into the file "shelxc.log".')
 ##################################################################################
+
 ###### Modify ins file######
 if title_name+'_fa.ins' in os.listdir(os.getcwd()):
     content=open(title_name+'_fa.ins', "r").read()
@@ -142,16 +144,20 @@ for i in range(len(ins_list)):
         
     #Change RESOLUTION
     if 'SHEL' in ins_list[i]:
-        resolution_origin = ins_list[i].split(' ')[2]
-        ins_list[i] = ins_list[i].replace(resolution_origin, args.resolution)
+        resolutionHighCutOff = ins_list[i].split(' ')[2]
+        ins_list[i] = ins_list[i].replace(resolutionHighCutOff, args.resolution)
+        resolutionLowCutOff = ins_list[i].split(' ')[1]
+        ins_list[i] = ins_list[i].replace(resolutionLowCutOff, args.low_resolution_cut)
 
     elif 'END' in ins_list[i]:
         for j in range (i, len(ins_list)):
             ins_list[j] = ' '
 
-# for i in ins_list:
-#     if i == ' ':
-#         del(ins_list[ins_list.index(i)])
+    elif 'HKLF' in ins_list[i]:
+	    last_term = ins_list[i]
+
+if int(args.disulfide_count)!= 0 and args.type_of_atoms == 'S':
+    ins_list.append('DSUL '+args.disulfide_count)
 
 if args.minimum_e:
     ins_list.append('ESEL '+args.minimum_e)
@@ -160,6 +166,9 @@ if args.test_min_del:
     # test_min_del_list = ast.literal_eval(args.test_min_del)
     ins_list.append('TEST '+str(args.test_min_del[0])+' '+str(args.test_min_del[1]))
 
+ins_list.remove(last_term)
+
+ins_list.append(last_term)
 
 ins_list.append('END')
 
@@ -182,6 +191,8 @@ for i in ins_list:
 #################################################### DEPLOYING SHELXD##############################################
 ins_file = title_name+'_fa.ins'
 hkl_file = title_name+'_fa.hkl'
+
+print("Now start the process of SHELXD")
 os.system('shelxd ' + title_name + '_fa')
 
 #################################################### modify pdb file ######################################
@@ -207,17 +218,21 @@ exp_num_atoms = 0
 for line in range(len(my_pdb)):
     if 'HETATM' in my_pdb[line]:
         likelihood = float(my_pdb[line].split()[8])
-	exp_num_atoms += 1
-        if ' S ' in my_pdb[line]:
-            my_pdb[line] = my_pdb[line].replace(' S ','SE')
+        exp_num_atoms += 1
+        #if ' S ' in my_pdb[line]:
+	if args.type_of_atoms == 'SE':
+            my_pdb[line] = my_pdb[line].replace(' S ',args.type_of_atoms)
+       
         if likelihood < THRESHOLD:
             my_pdb[line] = 'to_be_deleted'  
-	    exp_num_atoms -= 1
-my_pdb.remove('to_be_deleted')
+            exp_num_atoms -= 1
 
+my_new_pdb = filter(lambda a: a != 'to_be_deleted', my_pdb)
+if os.path.isfile('Guessed_atom_number.txt'):
+    os.remove('Guessed_atom_number.txt')
 print('exp_num_atoms = '+str(exp_num_atoms),file = open("Guessed_atom_number.txt","a"))
 if os.path.isfile(pdbFileOut):
     os.remove(pdbFileOut)
 
-for pdb_line in my_pdb:
+for pdb_line in my_new_pdb:
     print(pdb_line,file=open(pdbFileOut, "a"))
