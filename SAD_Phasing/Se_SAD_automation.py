@@ -1,3 +1,7 @@
+# This script is used to create the workflow for SHELXC/D and Crank2
+# All paramters is parsed for SHELXC/D. Crank2 will take the result from SHELXD directly
+# Partial result in the mid-steps is examined here but alse in SHELXC/D and Crank2 scripts.
+# The result will be presented in the directory of the batch_submission.py
 from __future__ import print_function
 import sys
 import subprocess
@@ -15,7 +19,7 @@ current_path = os.getcwd()
 
 if os.path.isfile("all_jobs.txt"):
     os.remove("all_jobs.txt")
-    
+###################################### Parse files and parameters ############################################    
 parser= argparse.ArgumentParser()
 
 parser.add_argument("-rfl","--reflection-mtz", help="input the mtz file of reflection", type = str)
@@ -30,7 +34,7 @@ parser.add_argument("-SFAC", "--atom-type", help = "SAD atom type", type = str)
 parser.add_argument("-MIND1","--mind-atom", default = '-3.5', help = "input minimum distance between atoms", type = str)
 parser.add_argument("-MIND2","--mind-symm", default = '2.2',help = "input minimum distance between symmetry", type = str)
 parser.add_argument("-lresl","--low-resolution-cut",default = '999', help = "input low resolution cutoff",type = str)
-
+parser.add_argument("-P", "--path", help = "input the orginal path", type = str)
 args = parser.parse_args()
 
 if args.reflection_mtz:
@@ -63,6 +67,7 @@ if args.atom_type:
 if args.esel:
     eSel = args.esel
     
+    
 shelx_CD = 'python SHELX_script.py  -rfl '+reflectionFile+' -MIND1 '+args.mind_atom+' -MIND2 '+args.mind_symm+' -resl '+str(resolution)+' -lresl '+args.low_resolution_cut+' -TEST 0 99 -ESEL '+eSel+' -SFAC '+atomType+' -NTRY 5000 -FIND '+str(atom_find)+' -DSUL '+str(dsul)+' -thre '+args.threshold
 
 os.system(shelx_CD)
@@ -73,7 +78,7 @@ with open(job_name+'_fa.res','r') as f:
         CFOM_list.append(line.rstrip('\n'))
 for line in CFOM_list:
     if 'CFOM' in line:
-	CFOM = line.split('CFOM')[-1].replace(' ','')
+        CFOM = line.split('CFOM')[-1].replace(' ','')
 
 # To check whether SHELXC/D
 if os.path.isfile(job_name+'_fa_cleaned.pdb'):
@@ -104,12 +109,36 @@ for line  in content.split('\n'):
                 new_mtz = 'result.mtz'
                 print("Now it's time to start AutoBuild")
             else:
-                print("experimental reflection file has not been genereted")
+                print("Experimental reflection file has not been genereted")
                 sys.exit()
 
 
-sys.exit()
-#To be deleted
+########################################## retrieve results ##############################################
+for i in os.listdir(os.getcwd()):
+    file_name = i.split('.')
+    if file_name[-1] == 'log':
+        if file_name[0] != 'shelxc' and file_name[0] != 'logfile':
+            log_file = i
+            
+log_content = []
+with open(log_file) as f:
+    for line in f:
+        log_content.append(line.rstrip('\n'))
+        
+R_list=[]
+R_free_list=[]
+if 'Majority of model was successfully built!' in log_content:
+    for i in log_content:
+        if 'R factor after refinement is ' in i:
+            R_list.append(i.split(' is ')[-1])
+        if 'R-free factor after refinement is ' in i:
+            R_free_list.append(i.split(' is ')[-1])
+
+
+os.chdir(args.path)          
+print(current_path+'/R:'+R_list[-1]+' ,R_free:'+R_free_list[-1],file=open('final_result.txt','a'))
+            
+############################################ To be modified !##############################################
 # auto_build_cl = 'python autobuild.py -rfl '+new_mtz+' -orfl reflectionFile -seq '+sequenceFile+' -rfff 0.05 -nproc 12'
 
 # os.system(auto_build_cl)

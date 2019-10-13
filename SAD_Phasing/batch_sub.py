@@ -1,4 +1,4 @@
-# THis is the top file of the SAD pipeline. 
+# This is the top file of the SAD pipeline. 
 # It is used to carry out the batch submission
 # This .py will do several automation and grid definition, and parse
 # these information to SAD-automation file.
@@ -14,8 +14,10 @@ import ast
 import numpy as np
 import shutil
 
-#This is the original directory which is the 'root' directory of your results
+############ This is the original directory which is the 'root' directory of your results ##########################
 original_path = os.getcwd()
+if os.path.isfile("final_result.txt"):
+    os.remove("final_result.txt")
 parser= argparse.ArgumentParser()
 
 parser.add_argument("-rfl","--reflection-mtz", help="input the mtz file of reflection", type = str)
@@ -89,7 +91,7 @@ max_S = single_S_or_SE_number+double_sulfur_number
 max_SE = single_S_or_SE_number
 
 #######################################################
-process = subprocess.Popen('phenix.mtz.dump '+'a2a_ccp4ifw.mtz', 
+process = subprocess.Popen('phenix.mtz.dump '+reflectionFile, 
                           stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,shell=True)
 
@@ -103,8 +105,7 @@ for line in split_out:
         
 
 DSUL_range = range(1,max_DSUL+1)
-resolution_range = np.arange(resolution, resolution+1.5, 0.1) #2.4 4.1 0.1
-#atom_find = np.arange(10,13,1)#10,21,1
+resolution_range = np.arange(resolution, resolution+1.5, 0.1) 
 if atomType == 'SE':
     atom_find = range(max_SE/2, max_SE+1)
 elif atomType == 'S':
@@ -115,7 +116,7 @@ elif atomType == 'S':
 thre_range = np.linspace(0.2,0.5,4)
 
 
-#consider for DSUL parameter
+#Consider for DSUL parameter
 if max_DSUL > 0 and atomType == 'S':
     for dsul in DSUL_range:
         for thre in thre_range:
@@ -126,8 +127,9 @@ if max_DSUL > 0 and atomType == 'S':
                     os.system('cp Se_SAD_automation.py SHELX_script.py crank2_script.py autobuild.py '+sequenceFile+' '+reflectionFile+' '+directory)
                     os.chdir("./"+directory)
 
-                    automation_cl = 'python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.3 -thre '+str(thre)+' -DSUL '+str(dsul)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -lresl '+low_resolution_cut
+                    automation_cl = 'python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.3 -thre '+str(thre)+' -DSUL '+str(dsul)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -lresl '+low_resolution_cut+' -P '+original_path
                     os.system('bsub -q psanaq -n 12 -o %J.log '+automation_cl)
+                    #print ('bsub -q psanaq -n 12 -o %J.log '+automation_cl)
                     os.chdir(original_path)
 
 #Do not consider DSUl parameter
@@ -141,6 +143,7 @@ elif max_DSUL == 0 or atomType != 'S':
                 os.system('cp Se_SAD_automation.py SHELX_script.py crank2_script.py autobuild.py '+sequenceFile+' '+reflectionFile+' '+directory)
                 os.chdir("./"+directory)
 
-                automation_cl = 'python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.5 -thre '+str(thre)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm
+                automation_cl = 'python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.5 -thre '+str(thre)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -P '+original_path
                 os.system('bsub -q psanaq -n 12 -o %J.log '+automation_cl)
+                #print ('bsub -q psanaq -n 12 -o %J.log '+automation_cl)
                 os.chdir(original_path)

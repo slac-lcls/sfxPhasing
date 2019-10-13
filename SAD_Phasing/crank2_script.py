@@ -7,9 +7,10 @@ import re
 import json
 import ast
 
+#prevent repeatedly writing
 if os.path.isfile("crank2.inp"):
     os.remove("crank2.inp")
-
+#################################### Parse files and atom types ########################################
 parser= argparse.ArgumentParser()
 
 
@@ -24,22 +25,32 @@ if args.reflection_mtz:
     reflection_file = args.reflection_mtz
 else:
     print('The reflection file is missing')
+    sys.exit()
 
 if args.pdb_file:
      pdb= args.pdb_file
 else:
     print('The pdb file is missing')
-
+    sys.exit
+    
 if args.sequence_file:
     seq_file = args.sequence_file
 else:
     print('The sequence file is missing')
+    sys.exit()
 
 if args.atom_type:
-   atomType = args.atom_type
+    atomType = args.atom_type
+################################################################################################################
 
+
+################################### Modified the label of the input mtz file ####################################
 os.system("cmtzsplit -mtzin "+reflection_file+" -mtzout reflection_out.mtz -colin 'F(+),SIGF(+),F(-),SIGF(-)' -colout Fplus,SIGFplus,Fminus,SIGFminus")
+#################################################################################################################
 
+################################### Extract protein chain information ###########################################
+# By using xtriage, we retrieve
+# monomer number per asymmetric unit, solvent content, and number of residues
 process = subprocess.Popen('phenix.xtriage reflection_out.mtz '+seq_file, 
                           stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,shell=True)
@@ -75,8 +86,8 @@ i = 2
 while still_in_table:
     copy_check = float(mylist[statistical_title_index + i].split('|')[1].replace(' ',''))
     if copy_check == float(best_guess):
-       solvent_content = mylist[statistical_title_index + i].split('|')[2].replace(' ','')
-       still_in_table = False
+        solvent_content = mylist[statistical_title_index + i].split('|')[2].replace(' ','')
+        still_in_table = False
     else:
         i+=1
     
@@ -85,8 +96,12 @@ num_atoms = str(4)
 with open('Guessed_atom_number.txt','r') as f:
     for line in f:
         if 'exp_num_atoms' in line:
-	   num_atoms = line.split(" = ")[1].replace('\n','')
-	   print(type(num_atoms))
+            num_atoms = line.split(" = ")[1].replace('\n','')
+            print(type(num_atoms))
+###########################################################################################################
+
+###################################Draft Crank2.inp########################################################
+#density modification run number is defined to be 50, dmcyc:50
 
 line1 = 'fsigf plus dname=peak f=Fplus sigf=SIGFplus "file=reflection_out.mtz"'
 line2 = 'fsigf minus dname=peak f=Fminus sigf=SIGFminus'
@@ -101,7 +116,9 @@ crank_inp_file = [line1, line2, line3, line4, line5, line6,line7,line8]
 
 for i in crank_inp_file:
     print(i,file=open("crank2.inp", "a"))
+#############################################################################################################
 
+#################################### Run Crank2 ###############################################################
 command = 'python /reg/common/package/ccp4/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
 
 os.system(command)

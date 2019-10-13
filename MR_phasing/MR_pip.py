@@ -11,16 +11,15 @@ if os.path.isfile("output.eff"):
     os.remove("output.eff")
 
 parser= argparse.ArgumentParser()
-#subparsers = parser.add_subparsers(help='sub-command help')
 
-########################################################### CREATE DICTIONARY ##############################################################
+#########################################CREATE DICTIONARY ###############################################
 my_temp={"hklin":"None", 
       
-      "labin":"FP,SIGFP",#"F_CuKa,SIGF_CuKa,DANO_CuKa,SIGDANO_CuKa,ISYM_CuKa",#"IMEAN,SIGIMEAN",#"Fobs,Sigma",#"FP,SIGFP",
+         "labin":"FP,SIGFP",
       
-    "resolution_cutoff": "2.5",
+         "resolution_cutoff": "2.5",
       
-    "no_tncs":"False",
+         "no_tncs":"False",
       
       "crystal_symmetry":{
           "unit_cell":"None",
@@ -307,8 +306,8 @@ for i in my_temp:
     my_string = i + '=' +json.dumps(my_temp[i])
 
     for j in range (1,(args.component_count)+1):
-       k = str(j)
-       if 'component'+k in my_string:
+        k = str(j)
+        if 'component'+k in my_string:
             my_string = my_string.replace('component'+k,'component')
 
     my_string=my_string.replace('}','\n}')

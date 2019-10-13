@@ -7,6 +7,11 @@ import re
 import json
 import ast
 
+######################################### Parse in Parameters #######################################
+# The meaning and definition of the most of the parameters are defined in the 'help' of add_argument method
+# For more information: https://strucbio.biologie.uni-konstanz.de/ccp4wiki/index.php?title=SHELX_C/D/E
+# -lresl is the low resolution bound of finding. For strong Se signal, it is set to be 999 meaning infinity
+# -thre is the threshold of the occupany below which we discard the heavy atom sites in the heavy atom pdb
 parser= argparse.ArgumentParser()
 
 parser.add_argument("-rfl","--reflection-mtz", help="input the mtz file of reflection", type = str)
@@ -67,7 +72,6 @@ for i in range(len(split_out)):
 
 my_mtz={}
 for each_line in mylist:
-    #each_line=each_line.replace(' ','')
     if len(each_line.split(":"))== 2:
         key, value = each_line.split(":")[0],each_line.split(":")[1]
         my_mtz[key] = value
@@ -79,31 +83,25 @@ for key in my_mtz:
       if unit_cell_search in key.lower():
             my_mtz[key]=my_mtz[key].replace('(','').replace(')','').replace(',',' ')
             CELL= my_mtz[key]
-        #print('unit_cell='+my_mtz[key])
 
 
 space_group_search = 'space group symbol'
 
 for key in my_mtz:
-      if space_group_search in key.lower():
-            
+      if space_group_search in key.lower():        
             SPACE_GROUP= my_mtz[key]
-        #print('space_group='+my_mtz[key])
 
-print(CELL)
-
-print(SPACE_GROUP)
 #############################################################################################################
 
-########################### Convert mtz to shelxreadable ################################
-#FREE=FreeRflag
+#################################### Convert mtz to shelxreadable ################################
+
 if os.path.isfile("shelxc.inp"):
     os.remove("shelxc.inp")
 if os.path.isfile("mtz2shelx.sh"):
     os.remove("mtz2shelx.sh")
 print('#!/bin/csh -f',file=open("mtz2shelx.sh", "a"))
 print("mtz2various hklin "+reflection_file+" hklout shelx_readable.hkl << eof",file=open("mtz2shelx.sh", "a"))
-print("LABIN I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) SIGI(-)=SIGI(-)",file=open("mtz2shelx.sh", "a"))
+print("LABIN I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) SIGI(-)=SIGI(-)",file=open("mtz2shelx.sh", "a"))#FREE=FreeRflag
 print("OUTPUT SHELX",file = open("mtz2shelx.sh", "a"))
 print("eof",file=open("mtz2shelx.sh", "a"))
 print("#",file=open("mtz2shelx.sh", "a"))
@@ -123,9 +121,9 @@ title_name = reflection_file.replace('.mtz','')#.replace('_','')
 #print ('+++++++++++++++++++++++++++++')
 os.system('shelxc '+title_name+' < shelxc.inp > shelxc.log')
 print('SHELXC log has been written into the file "shelxc.log".')
-##################################################################################
+#############################################################################################
 
-###### Modify ins file######
+####################################### Modify ins file#####################################
 if title_name+'_fa.ins' in os.listdir(os.getcwd()):
     content=open(title_name+'_fa.ins', "r").read()
 
@@ -163,7 +161,6 @@ if args.minimum_e:
     ins_list.append('ESEL '+args.minimum_e)
 
 if args.test_min_del:
-    # test_min_del_list = ast.literal_eval(args.test_min_del)
     ins_list.append('TEST '+str(args.test_min_del[0])+' '+str(args.test_min_del[1]))
 
 ins_list.remove(last_term)
@@ -195,7 +192,7 @@ hkl_file = title_name+'_fa.hkl'
 print("Now start the process of SHELXD")
 os.system('shelxd ' + title_name + '_fa')
 
-#################################################### modify pdb file ######################################
+#################################################### modify pdb file ##########################################
 if title_name+'_fa.pdb' in os.listdir(os.getcwd()):
     pdbFileIn = title_name+'_fa.pdb'
 else:
@@ -220,14 +217,16 @@ for line in range(len(my_pdb)):
         likelihood = float(my_pdb[line].split()[8])
         exp_num_atoms += 1
         #if ' S ' in my_pdb[line]:
-	if args.type_of_atoms == 'SE':
-            my_pdb[line] = my_pdb[line].replace(' S ',args.type_of_atoms)
+    if args.type_of_atoms == 'SE':
+        my_pdb[line] = my_pdb[line].replace(' S ',args.type_of_atoms)
        
         if likelihood < THRESHOLD:
             my_pdb[line] = 'to_be_deleted'  
             exp_num_atoms -= 1
 
 my_new_pdb = filter(lambda a: a != 'to_be_deleted', my_pdb)
+
+
 if os.path.isfile('Guessed_atom_number.txt'):
     os.remove('Guessed_atom_number.txt')
 print('exp_num_atoms = '+str(exp_num_atoms),file = open("Guessed_atom_number.txt","a"))
