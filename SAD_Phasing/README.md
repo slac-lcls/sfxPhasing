@@ -11,10 +11,21 @@ Resolution is set by inspecting the input reflection file. The highest resoltuio
 
 Atom_number is defined in separated cases. If Selenium (Se) is the anomalous scatterer, highest Se number will be number of methionine (M) in the sequence file. If Sulfur (S) is the anomalous scatterer, highest S number will be number of methionine (M) plus the number of cystine (C). The scan range of both case will be from half of the highest number to the highest number.
 
+ESEL is defined to be 1.3 for S-SAD and 1.5 for Se-SAD.
+
 Beside these scanned parameters, there are several other defined paramters: minimal distance between atoms (MIND1), minimal distance between symmetry units (MIND2), and highest resolution cutoff. They are determined only on the type of the scatterer. The detailed numbers are in the json file. This json file will be read directly by batch.py.
  
 NOTICE: All of the parameters (scanned or fixed) are for SHELXC/D. Crank2 do not take parameters.
 
-# Se_SAD_Automation.py
+# SAD_Automation.py
 
-The name of this file is subjected to be changed.
+This file will be directly called by batch.py. It controls the flow of two phasing algorithm scripts below: SHELX_script.py and Crank2.py. 
+
+Firstly, It passed reflection file and all of the mentioned paramters to SHELX_script.py. Whether SHELXD produced heavy atom site pdb or not is judged within SHELX_script.py. It appropriate files have not been generated, SHELX_script will force the whole progrma to terminate.
+
+If the SHELX produced the appropriate files (does not necessarily containing the correct information), SAD_automation.py will arouse the Crank2.py. No matter what Crank2.py will one of three possibilities:
+1) 'Majority of model was successfully built!'. This means the reconstruction is on the right track. Further refinement using Autobuild will be meaningful to do.
+2) 'Wrong substructure or very weak phases suspected: the model building seems unsuccessful'. It means crank2 has tried but cannot reach to a converged R/Rfree value. 
+3) Any possible file parsing or parameter extraction error. Developers will inspect it continuously.
+
+If 1) is the case, the result will be put at the directory in which batch_submission.py locates. And finally there will be a file called "final_result.txt" containing all the successful case and their corresponding R/Rfree value.
