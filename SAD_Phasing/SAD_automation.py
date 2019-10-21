@@ -135,8 +135,9 @@ if 'Majority of model was successfully built!' in log_content:
             R_free_list.append(i.split(' is ')[-1])
 
 
-os.chdir(args.path)          
-print(current_path+'/R:'+R_list[-1]+' ,R_free:'+R_free_list[-1],file=open('final_result.txt','a'))
+    os.chdir(args.path)          
+    print(current_path+'/R:'+R_list[-1]+' ,R_free:'+R_free_list[-1],file=open('final_result.txt','a'))
+    
             
 ############################################ To be modified !##############################################
 # auto_build_cl = 'python autobuild.py -rfl '+new_mtz+' -orfl reflectionFile -seq '+sequenceFile+' -rfff 0.05 -nproc 12'
