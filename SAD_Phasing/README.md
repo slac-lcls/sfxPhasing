@@ -1,3 +1,6 @@
+For S/Se-SAD type:
+python batch_sub.py -rfl xxx.mtz -seq xxx.fasta -SFAC S/Se
+
 # batch.py and parameter.json
 
 This file is used to do batch submission. It connects directly with Se_SAD_automation file. The 'Grid' is formed by this file.
