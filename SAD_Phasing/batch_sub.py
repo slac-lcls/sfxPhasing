@@ -104,16 +104,17 @@ for line in split_out:
         resolution = round(float(line.split(' ')[-1]),1)
         
 
-DSUL_range = range(1,max_DSUL+1)
-resolution_range = np.arange(resolution, resolution+1.5, 0.1) 
-if atomType == 'SE':
-    atom_find = range(max_SE/2, max_SE+1)
-elif atomType == 'S':
+DSUL_range =range(3,6)#= range(1,max_DSUL+1)
+resolution_range = np.arange(resolution, resolution+1.0, 0.1) 
+
+if atomType == 'S':
     atom_find = range(max_S/2, max_S+1)
+else:
+    atom_find = range(max_SE/2, max_SE+1)
 
     
     
-thre_range = np.linspace(0.2,0.5,4)
+thre_range = np.linspace(0.2,0.4,3) #(0.2,0.5,4)
 
 
 #Consider for DSUL parameter

@@ -101,7 +101,7 @@ if os.path.isfile("mtz2shelx.sh"):
     os.remove("mtz2shelx.sh")
 print('#!/bin/csh -f',file=open("mtz2shelx.sh", "a"))
 print("mtz2various hklin "+reflection_file+" hklout shelx_readable.hkl << eof",file=open("mtz2shelx.sh", "a"))
-print("LABIN I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) SIGI(-)=SIGI(-)",file=open("mtz2shelx.sh", "a"))#FREE=FreeRflag
+print("LABIN I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) SIGI(-)=SIGI(-) FREE=FreeRflag",file=open("mtz2shelx.sh", "a"))#FREE=FreeRflag
 print("OUTPUT SHELX",file = open("mtz2shelx.sh", "a"))
 print("eof",file=open("mtz2shelx.sh", "a"))
 print("#",file=open("mtz2shelx.sh", "a"))
@@ -116,9 +116,9 @@ for i in molecule_inp:
     my_string = my_string.replace('"','')
     print(my_string,file=open("shelxc.inp", "a"))
 
-title_name = reflection_file.replace('.mtz','')#.replace('_','')
+title_name = reflection_file.replace('.mtz','')
 
-#print ('+++++++++++++++++++++++++++++')
+
 os.system('shelxc '+title_name+' < shelxc.inp > shelxc.log')
 print('SHELXC log has been written into the file "shelxc.log".')
 #############################################################################################
@@ -152,7 +152,7 @@ for i in range(len(ins_list)):
             ins_list[j] = ' '
 
     elif 'HKLF' in ins_list[i]:
-	    last_term = ins_list[i]
+        last_term = ins_list[i]
 
 if int(args.disulfide_count)!= 0 and args.type_of_atoms == 'S':
     ins_list.append('DSUL '+args.disulfide_count)
@@ -216,17 +216,15 @@ for line in range(len(my_pdb)):
     if 'HETATM' in my_pdb[line]:
         likelihood = float(my_pdb[line].split()[8])
         exp_num_atoms += 1
-        #if ' S ' in my_pdb[line]:
-    if args.type_of_atoms == 'SE':
-        my_pdb[line] = my_pdb[line].replace(' S ',args.type_of_atoms)
-       
+        
+        if args.type_of_atoms != 'S':
+            my_pdb[line] = my_pdb[line].replace(' S ',args.type_of_atoms)
+
         if likelihood < THRESHOLD:
             my_pdb[line] = 'to_be_deleted'  
             exp_num_atoms -= 1
 
 my_new_pdb = filter(lambda a: a != 'to_be_deleted', my_pdb)
-
-
 if os.path.isfile('Guessed_atom_number.txt'):
     os.remove('Guessed_atom_number.txt')
 print('exp_num_atoms = '+str(exp_num_atoms),file = open("Guessed_atom_number.txt","a"))
