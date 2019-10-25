@@ -23,6 +23,9 @@ parser= argparse.ArgumentParser()
 parser.add_argument("-rfl","--reflection-mtz", help="input the mtz file of reflection", type = str)
 parser.add_argument("-seq","--sequence-file",help = "input the sequence file", type = str)
 parser.add_argument("-SFAC","--atom-type", help = "input the name of atom of this SAD (case insensitive)" , type = str)
+parser.add_argument("-q", "--queue", help = "input the computing queue you want to use", type = str)
+parser.add_argument("-n", "--number-of-cores", help = "input the number of core you want to use", type = str)
+
 args = parser.parse_args()
 
 #parse reflection file
@@ -43,8 +46,19 @@ if args.atom_type:
     atomType = (args.atom_type).upper()
 else:
     print('Please input the scattering atoms')
-    sys.exit
+    sys.exit()
 
+if args.queue:
+    computeQueue = args.queue
+else:
+    print ('Please input the computing queue you want to use')
+    sys.exit()
+    
+if args.number_of_cores:
+    coreNumber = args.number_of_cores
+else:
+    print ('Please address the core number you want to use')
+    sys.exit()
 ###################### Setup the Grid Range #########################
 
 print("This program utilize two softwares, CCP4i2 SHELXC/D and Crank2. Further refinement can be done by initiating Autobuild")
@@ -104,7 +118,7 @@ for line in split_out:
         resolution = round(float(line.split(' ')[-1]),1)
         
 
-DSUL_range =range(3,6)#= range(1,max_DSUL+1)
+DSUL_range = range(1,max_DSUL+1)
 resolution_range = np.arange(resolution, resolution+1.0, 0.1) 
 
 if atomType == 'S':
@@ -129,8 +143,9 @@ if max_DSUL > 0 and atomType == 'S':
                     os.chdir("./"+directory)
 
                     automation_cl = 'python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.3 -thre '+str(thre)+' -DSUL '+str(dsul)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -lresl '+low_resolution_cut+' -P '+original_path
-                    os.system('bsub -q psanaq -n 12 -o %J.log '+automation_cl)
-                    #print ('bsub -q psanaq -n 12 -o %J.log '+automation_cl)
+                    #os.system('bsub -q psanaq -n 12 -o %J.log '+automation_cl)
+                    #os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
+                    print ('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
                     os.chdir(original_path)
 
 #Do not consider DSUl parameter
@@ -145,6 +160,6 @@ elif max_DSUL == 0 or atomType != 'S':
                 os.chdir("./"+directory)
 
                 automation_cl = 'python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.5 -thre '+str(thre)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -P '+original_path
-                os.system('bsub -q psanaq -n 12 -o %J.log '+automation_cl)
-                #print ('bsub -q psanaq -n 12 -o %J.log '+automation_cl)
+                #os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
+                print ('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
                 os.chdir(original_path)
