@@ -10,6 +10,16 @@ import ast
 if os.path.isfile("output.eff"):
     os.remove("output.eff")
 
+if os.path.isfile("final_result.txt"):
+    os.remove("final_result.txt")
+
+
+current_path = os.getcwd()
+
+with open('FILE_SETUP.json') as json_file:
+    parameter = json.load(json_file)
+    component_num = int(parameter['component number'])
+
 parser= argparse.ArgumentParser()
 
 #########################################CREATE DICTIONARY ###############################################
@@ -149,7 +159,12 @@ parser.add_argument("-c","--chains-count", default = 1, help="input the number o
 #create resolution cutoff parse
 parser.add_argument("-res","--resolution", default = 2.5, help="input the resolution cut off", type = float)
 
-for i in range(1,10):
+# input the root directory
+parser.add_argument("-P", "--path", help = "input the orginal path", type = str)
+
+parser.add_argument("-cpus", "--number-of-cores", help = "input the number of core you want to use", type = str)
+
+for i in range(1,component_num+1):#10:
     #create pdb argument parse
     j=str(i)
     parser.add_argument("-pdbE"+j,"--component"+j+"-ensemble-pdb",help="input the pdb"+j+" file of ensemble",type = str)
@@ -201,6 +216,8 @@ if args.resolution:
 if args.chains_count:
     my_temp['composition']['count'] = args.chains_count
 
+if args.number_of_cores:
+    my_temp['queue']['cpus'] = args.number_of_cores
 
 for i in range(1, (args.component_count) +1):
 
@@ -328,15 +345,60 @@ for i in my_temp:
 
 
 ####################################### DEPLOY PHENIX COMMAND LINE#############################################
-process = subprocess.Popen('phaser.MRage --verbosity=VERBOSE output.eff', 
-                          stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE,shell=True)
+#process = subprocess.Popen('phaser.MRage --verbosity=VERBOSE output.eff', 
+#                         stdout=subprocess.PIPE,
+#                          stderr=subprocess.PIPE,shell=True)
 
+os.system('phaser.MRage --verbosity=VERBOSE output.eff')
 
-out,err = process.communicate()
+#out,err = process.communicate()
 
-split_out=out.splitlines()
+#split_out=out.splitlines()
 
-for i in range(len(split_out)):
-      print(split_out[i].decode("utf-8"))
+#for i in range(len(split_out)):
+#     print(split_out[i].decode("utf-8"))
 ####################################################################################################################
+
+#######################Output result to the root directory#########################################
+for item in os.listdir(os.getcwd()):
+    if '.log' in item:
+        logFile = item
+
+mylog = []
+
+with open(logFile) as f:
+    for lines in f:
+        mylog.append(lines)
+        
+print(logFile)
+print('CHECK'+mylog[0])
+try:
+    resultTitle_index = mylog.index('Evaluation for probability of solution being correct:\n')
+except:
+    print ('The case is not successful')
+
+for line in mylog:
+    if 'P(total)=' in line:
+        end_of_result = mylog.index(line)
+
+result = []
+P_total = mylog[end_of_result].replace('\n',' ')
+
+result.append(P_total)
+
+for i in mylog[resultTitle_index+1:end_of_result]:
+    try:
+        prob = i.split("=>")[-1].split('=')[-1].replace('\n',' ')
+        TFZ = i.split("=>")[0].split('=')[-1].replace('\n','')
+        result.append('TFZ = '+TFZ+' Probability = '+prob)
+    
+    except:
+        pass
+
+result_statement = current_path+' '
+for i in result:
+    result_statement += ''+i+''
+    
+os.chdir(args.path)
+print(result_statement.replace(args.path,''),file=open('final_result.txt','a'))
+    

@@ -136,7 +136,7 @@ if 'Majority of model was successfully built!' in log_content:
 
 
     os.chdir(args.path)          
-    print(current_path+'/R:'+R_list[-1]+' ,R_free:'+R_free_list[-1],file=open('final_result.txt','a'))
+    print(current_path.replace(args.path,'')+'/R:'+R_list[-1]+' ,R_free:'+R_free_list[-1],file=open('final_result.txt','a'))
     
             
 ############################################ To be modified !##############################################
