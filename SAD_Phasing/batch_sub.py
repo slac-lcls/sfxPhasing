@@ -25,7 +25,7 @@ parser.add_argument("-seq","--sequence-file",help = "input the sequence file", t
 parser.add_argument("-SFAC","--atom-type", help = "input the name of atom of this SAD (case insensitive)" , type = str)
 parser.add_argument("-q", "--queue", help = "input the computing queue you want to use", type = str)
 parser.add_argument("-n", "--number-of-cores", help = "input the number of core you want to use", type = str)
-
+parser.add_argument("-na", "--number-of-atoms", help = "input number of heavy anomalous scatterers", type = int)
 args = parser.parse_args()
 
 #parse reflection file
@@ -100,9 +100,19 @@ for i in protein:
     elif i=='C':
         double_sulfur_number+=1
         
-max_DSUL = double_sulfur_number/2
-max_S = single_S_or_SE_number+double_sulfur_number
-max_SE = single_S_or_SE_number
+if single_S_or_SE_number == 0:
+    if args.number_of_atoms:
+        SE_num = args.number_of_atoms
+        max_DSUL = double_sulfur_number/2
+        max_S = single_S_or_SE_number+double_sulfur_number
+    else:
+        print("There is no methionine in this protein. Please enter the number of heavy atoms using -na")
+        sys.exit()
+
+else :
+    max_DSUL = double_sulfur_number/2
+    max_S = single_S_or_SE_number+double_sulfur_number
+    max_SE = single_S_or_SE_number
 
 #######################################################
 process = subprocess.Popen('phenix.mtz.dump '+reflectionFile, 
@@ -124,7 +134,10 @@ resolution_range = np.arange(resolution, resolution+1.0, 0.1)
 if atomType == 'S':
     atom_find = range(max_S/2, max_S+1)
 else:
-    atom_find = range(max_SE/2, max_SE+1)
+    if single_S_or_SE_number == 0:
+        atom_find = range(SE_num-2, SE_num+3)
+    else:
+        atom_find = range(max_SE/2, max_SE+1)
 
     
     
@@ -144,8 +157,8 @@ if max_DSUL > 0 and atomType == 'S':
 
                     automation_cl = 'python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.3 -thre '+str(thre)+' -DSUL '+str(dsul)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -lresl '+low_resolution_cut+' -P '+original_path
                     #os.system('bsub -q psanaq -n 12 -o %J.log '+automation_cl)
-                    #os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
-                    print ('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
+                    os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
+                    #print ('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
                     os.chdir(original_path)
 
 #Do not consider DSUl parameter
@@ -160,6 +173,6 @@ elif max_DSUL == 0 or atomType != 'S':
                 os.chdir("./"+directory)
 
                 automation_cl = 'python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.5 -thre '+str(thre)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -P '+original_path
-                #os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
-                print ('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
+                os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
+                #print ('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
                 os.chdir(original_path)
