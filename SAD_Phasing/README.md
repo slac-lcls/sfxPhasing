@@ -1,5 +1,5 @@
 For S/Se-SAD type:
-python batch_sub.py -rfl xxx.mtz -seq xxx.fasta -SFAC S/Se
+python batch_sub.py -rfl xxx.mtz -seq xxx.fasta -SFAC S/Se -q xxxq -n #ofCores
 
 # batch.py and parameter.json
 
