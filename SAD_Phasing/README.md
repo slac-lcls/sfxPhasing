@@ -1,5 +1,13 @@
-For S/Se-SAD type:
-python batch_sub.py -rfl xxx.mtz -seq xxx.fasta -SFAC S/Se -q xxxq -n #ofCores
+# Get Start
+The prepared data for SAD in Stanford Box is in a2a_S_SAD and strep_v2 folder. Each of them contains a reflection data (.mtz) and a sequence file (.seq). 
+
+For a2a_S_SAD:
+python batch_sub.py -rfl a2a.mtz -seq a2a.fasta -SFAC S -q psanaq -n 12 -na 20
+Note: since the sequence file for this case contains methionine (M) and cystine (C), -na is not necessary to input. The DSUL parameter and heavy atom number for SHELX search will be read directly from sequence file and forming grids. -SFAC is the atom type. It is case insensitive
+
+For strep_v2:
+python batch_sub.py -rfl cxic0415_sz_ccp4IF.mtz -seq strep_mono.fasta.txt -SFAC Se -q psanaq -n 12 -na 4. 
+Note: Here tying the -na parameter is crucial. Because the script cannot get M and C from the sequence file in this case. If you do you input -na, there will be an error saying that M cannot be found so please input the atoms number. If you are not sure, just enter some number reasonable. If you input N, it will scan through N-2 to N+2.
 
 # batch.py and parameter.json
 
