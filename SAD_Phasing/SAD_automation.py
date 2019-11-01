@@ -89,7 +89,7 @@ else:
     sys.exit()
 
 # run crank2
-crank2_cl = 'python crank2_script.py -rfl '+reflectionFile+' -pdb '+new_pdb+' -seq '+sequenceFile+' -atype S'
+crank2_cl = 'python crank2_script.py -rfl '+reflectionFile+' -pdb '+new_pdb+' -seq '+sequenceFile+' -atype '+atomType 
 os.system(crank2_cl)
 
 # check whether crank2 works
