@@ -119,6 +119,7 @@ for i in crank_inp_file:
 #############################################################################################################
 
 #################################### Run Crank2 ###############################################################
+# FIXME: replace hard-coded path to ccp4 with user environment
 command = 'python /reg/common/package/ccp4/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
 
 os.system(command)
