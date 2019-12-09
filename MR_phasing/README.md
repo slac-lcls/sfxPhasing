@@ -1,1 +1,1 @@
-Type python MR_batch.py -rfl reflectyion -pdb pdb1 pdb2 .. pdbn -seq seq1 seq2 .. seqn -q xxxq -n #ofCores
+Type: python MR_batch.py -rfl beta_blip_P3221.mtz -pdb beta.pdb blip.pdb -seq beta.seq blip.seq -q psanaq -n 12
