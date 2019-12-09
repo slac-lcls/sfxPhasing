@@ -3,9 +3,9 @@ The prepared data for SAD in Stanford Box is in a2a_S_SAD and strep_v2 folder. E
 
 For a2a_S_SAD:
 
-Type: python batch_sub.py -rfl a2a.mtz -seq a2a.fasta -SFAC S -q psanaq -n 12 -na 20
+Type: python batch_sub.py -rfl a2a.mtz -seq a2a.fasta -SFAC S -q psanaq -n 12 
 
-Note: since the sequence file for this case contains methionine (M) and cystine (C), -na is not necessary to input. The DSUL parameter and heavy atom number for SHELX search will be read directly from sequence file and forming grids. -SFAC is the atom type. It is case insensitive.
+Note: since the sequence file for this case contains methionine (M) and cystine (C). The DSUL parameter and heavy atom number for SHELX search will be read directly from sequence file and forming grids. -SFAC is the atom type. It is case insensitive.
 
 For strep_v2:
 
