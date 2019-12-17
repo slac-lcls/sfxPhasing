@@ -89,7 +89,7 @@ else:
     sys.exit()
 
 # run crank2
-crank2_cl = 'python crank2_script.py -rfl '+reflectionFile+' -pdb '+new_pdb+' -seq '+sequenceFile+' -atype '+atomType 
+crank2_cl = 'python crank2_script.py -rfl '+reflectionFile+' -pdb '+new_pdb+' -seq '+sequenceFile+' -atype '+atomType+' -P '+args.path
 os.system(crank2_cl)
 
 # check whether crank2 works
@@ -114,29 +114,29 @@ for line  in content.split('\n'):
 
 
 ########################################## retrieve results ##############################################
-for i in os.listdir(os.getcwd()):
-    file_name = i.split('.')
-    if file_name[-1] == 'log':
-        if file_name[0] != 'shelxc' and file_name[0] != 'logfile':
-            log_file = i
+# for i in os.listdir(os.getcwd()):
+#     file_name = i.split('.')
+#     if file_name[-1] == 'log':
+#         if file_name[0] != 'shelxc' and file_name[0] != 'logfile':
+#             log_file = i
             
-log_content = []
-with open(log_file) as f:
-    for line in f:
-        log_content.append(line.rstrip('\n'))
+# log_content = []
+# with open(log_file) as f:
+#     for line in f:
+#         log_content.append(line.rstrip('\n'))
         
-R_list=[]
-R_free_list=[]
-if 'Majority of model was successfully built!' in log_content:
-    for i in log_content:
-        if 'R factor after refinement is ' in i:
-            R_list.append(i.split(' is ')[-1])
-        if 'R-free factor after refinement is ' in i:
-            R_free_list.append(i.split(' is ')[-1])
+# R_list=[]
+# R_free_list=[]
+# if 'Majority of model was successfully built!' in log_content:
+#     for i in log_content:
+#         if 'R factor after refinement is ' in i:
+#             R_list.append(i.split(' is ')[-1])
+#         if 'R-free factor after refinement is ' in i:
+#             R_free_list.append(i.split(' is ')[-1])
 
 
-    os.chdir(args.path)          
-    print(current_path.replace(args.path,'')+'/R:'+R_list[-1]+' ,R_free:'+R_free_list[-1],file=open('final_result.txt','a'))
+#     os.chdir(args.path)          
+#     print(current_path.replace(args.path,'')+'/R:'+R_list[-1]+' ,R_free:'+R_free_list[-1],file=open('final_result.txt','a'))
     
             
 ############################################ To be modified !##############################################

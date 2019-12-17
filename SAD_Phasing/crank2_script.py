@@ -7,6 +7,7 @@ import re
 import json
 import ast
 
+current_path = os.getcwd()
 #prevent repeatedly writing
 if os.path.isfile("crank2.inp"):
     os.remove("crank2.inp")
@@ -18,7 +19,7 @@ parser.add_argument("-rfl","--reflection-mtz", help="input the mtz file of refle
 parser.add_argument("-pdb","--pdb-file",help="input the pdb file",type = str)
 parser.add_argument("-seq","--sequence-file",help="input the sequence file",type = str)
 parser.add_argument("-atype", "--atom-type", help="input the atom type", type = str)
-
+parser.add_argument("-P", "--path", help = "input the orginal path", type = str)
 args = parser.parse_args()
 
 if args.reflection_mtz:
@@ -119,7 +120,53 @@ for i in crank_inp_file:
 #############################################################################################################
 
 #################################### Run Crank2 ###############################################################
-# FIXME: replace hard-coded path to ccp4 with user environment
 command = 'python /reg/common/package/ccp4/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
 
-os.system(command)
+process = subprocess.Popen(command, 
+                          stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE,shell=True)
+
+out,err = process.communicate()
+
+split_out=out.splitlines()
+#os.system(command)
+# for line in split_out:
+#     if 'Resolution range' in line:
+#         resolution = round(float(line.split(' ')[-1]),1)
+
+
+R_list=[]
+R_free_list=[]
+residue_report = []
+Succeed = False
+for line in split_out:
+    if 'Majority of model was successfully built!' in line:
+        Succeed = True
+        for i in split_out:
+            if 'R factor after refinement is ' in i:
+                R_list.append(i.split(' is ')[-1])
+            elif 'R-free factor after refinement is ' in i:
+                R_free_list.append(i.split(' is ')[-1])
+            elif ' fragments built.' in i:
+                residue_report.append(i)
+        break
+
+#         os.chdir(args.path)          
+#         print(current_path.replace(args.path,'')+'/R:'+R_list[-1]+' ,R_free:'+R_free_list[-1],file=open('final_result.txt','a'))
+    else:
+        Succeed = False
+    
+if Succeed == True:
+    os.chdir(args.path)          
+    print(current_path.replace(args.path+'/','')+'/R:'+R_list[-1]+'/R_free:'+R_free_list[-1]+'/Residue:'+residue_report[-1].split(' ')[0],file=open('final_result.txt','a'))
+    
+
+else:
+  
+    os.chdir(args.path)          
+    print(current_path.replace(args.path+'/','')+'/R:0.55/R_free:0.55',file=open('final_result.txt','a'))
+
+
+
+
+

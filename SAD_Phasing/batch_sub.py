@@ -13,11 +13,13 @@ import json
 import ast
 import numpy as np
 import shutil
+import random
 
 ############ This is the original directory which is the 'root' directory of your results ##########################
 original_path = os.getcwd()
 if os.path.isfile("final_result.txt"):
     os.remove("final_result.txt")
+    
 parser= argparse.ArgumentParser()
 
 parser.add_argument("-rfl","--reflection-mtz", help="input the mtz file of reflection", type = str)
@@ -26,6 +28,11 @@ parser.add_argument("-SFAC","--atom-type", help = "input the name of atom of thi
 parser.add_argument("-q", "--queue", help = "input the computing queue you want to use", type = str)
 parser.add_argument("-n", "--number-of-cores", help = "input the number of core you want to use", type = str)
 parser.add_argument("-na", "--number-of-atoms", help = "input number of heavy anomalous scatterers", type = int)
+parser.add_argument("-DSUL_R","--disulfide-range", nargs = '+', help='input the range of the disulfide range (optional)',type = str)
+parser.add_argument("-RESOL_R","--resolution-range", nargs = '+', help='input the range of the resolution range (optional)',type = str)
+parser.add_argument("-THRE_R","--threshold-range", nargs = '+', help='input the range of the threshold range (optional)',type = str)
+parser.add_argument("-ATOM_R","--atom-range", nargs = '+', help='input the range of the atom number range (optional)',type = str)
+
 args = parser.parse_args()
 
 #parse reflection file
@@ -135,7 +142,7 @@ if atomType == 'S':
     atom_find = range(max_S/2, max_S+1)
 else:
     if single_S_or_SE_number == 0:
-        atom_find = range(SE_num-2, SE_num+3)
+        atom_find = range(SE_num-1, SE_num+2)
     else:
         atom_find = range(max_SE/2, max_SE+1)
 
@@ -144,35 +151,185 @@ else:
 thre_range = np.linspace(0.2,0.4,3) #(0.2,0.5,4)
 
 
-#Consider for DSUL parameter
+################################# Update the grid range if asked by users ##############################
+if args.disulfide_range:
+    if atomType == 'S':
+        DSUL_range = range(int(args.disulfide_range[0]),int(args.disulfide_range[1])+1)
+    else:
+        print('The atom type is not S. Input disulfide range will not be used')
+else:
+    print("Defualt DSUL search range will be used")
+    
+    
+if args.resolution_range:
+    resolution_range = np.arange(round(float(args.resolution_range[0]),1),round(float(args.resolution_range[1])+0.1,1),0.1)
+else:
+    print("Defualt resolution search range will be used")
+    
+    
+if args.atom_range:
+    atom_find = range(int(args.atom_range[0]),int(args.atom_range[1])+1)
+else:
+    print("Defualt atom number search range will be used")
+    
+if args.threshold_range:
+    thre_range = np.arange(round(float(args.threshold_range[0]),1),round(float(args.threshold_range[1])+0.1,1),0.1)
+else:
+    print("Defualt threshold search range will be used")
+
+################################# Randomize the job submission ########################################
+print ("Disulfide search range: "+str(DSUL_range))
+print ("Threshold cut-off range: "+str(thre_range))
+print ("Resolution search range: "+str(resolution_range))
+print ("Atom number search range:"+str(atom_find))
+
+#sys.exit() #to be deleted
+
+
+
+directory_list = []
+command_list = []
+#creat a list of directory and corresponding command
 if max_DSUL > 0 and atomType == 'S':
     for dsul in DSUL_range:
         for thre in thre_range:
             for resolution in resolution_range:
                 for number in atom_find:
                     directory = 'DSUL'+str(dsul)+'/threshold'+str(thre)+'/resolution'+str(resolution)+'/atom_number'+str(number)
-                    os.system('mkdir -p '+directory)
-                    os.system('cp Se_SAD_automation.py SHELX_script.py crank2_script.py autobuild.py '+sequenceFile+' '+reflectionFile+' '+directory)
-                    os.chdir("./"+directory)
+                    directory_list.append(directory)
 
                     automation_cl = 'python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.3 -thre '+str(thre)+' -DSUL '+str(dsul)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -lresl '+low_resolution_cut+' -P '+original_path
-                    #os.system('bsub -q psanaq -n 12 -o %J.log '+automation_cl)
-                    os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
-                    #print ('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
-                    os.chdir(original_path)
+                    command_list.append(automation_cl)
+
 
 #Do not consider DSUl parameter
 elif max_DSUL == 0 or atomType != 'S':
     print ('0 disulfide bond found or the atom type you are looking for is not Sulfur. Do not consider the grid search for disulfied number')
-    for thre in thre_range:
-        for resolution in resolution_range:
-            for number in atom_find:
+    for thre in [0.3]:#thre_range:
+        for resolution in [2.8,2.9,3.0]:#resolution_range:
+            for number in [8]:#atom_find:
                 directory = 'threshold'+str(thre)+'/resolution'+str(resolution)+'/atom_number'+str(number)
-                os.system('mkdir -p '+directory)
-                os.system('cp Se_SAD_automation.py SHELX_script.py crank2_script.py autobuild.py '+sequenceFile+' '+reflectionFile+' '+directory)
-                os.chdir("./"+directory)
+                directory_list.append(directory)
+
 
                 automation_cl = 'python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.5 -thre '+str(thre)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -P '+original_path
-                os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
-                #print ('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+automation_cl)
-                os.chdir(original_path)
+                command_list.append(automation_cl)
+
+# Shuffle the jobs
+matching = list(zip(directory_list,command_list))
+          
+random.shuffle(matching) 
+
+directory_list,command_list = zip(*matching)
+
+# run jobs
+for i in range(len(directory_list)):
+    os.system('mkdir -p '+directory_list[i])
+    os.system('cp Se_SAD_automation.py SHELX_script.py crank2_script.py autobuild.py '+sequenceFile+' '+reflectionFile+' '+directory_list[i])  
+    os.chdir("./"+directory_list[i])
+    os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+command_list[i])
+    os.chdir(original_path)    
+    
+    
+#################### Wait for to start Autobuild to polish the model ###########################
+##helper method
+
+##Jobs count method 
+def job_count():
+    finished_jobs = []
+    try:
+        with open('final_result.txt','r') as f:
+            for line in f:
+                finished_jobs.append(line.replace('\n',''))
+
+        return len(finished_jobs)
+    except:
+        return 0
+
+##Job selected to do autobuild
+def case_select ():
+    results = []
+    with open('final_result.txt','r') as f:
+        for line in f:
+            results.append(line.replace('\n',''))
+
+    R_score = []
+    for result in results:
+        R_score.append(float(result.split('R_free:')[-1].split('/')[0]))
+
+    R_score = np.asarray(R_score)
+    polish_cases_Rfree = np.where(R_score == R_score.min())[0]
+
+    polish_cases_0 = []
+    for i in polish_cases_Rfree:
+        polish_cases_0.append(results[i])
+
+    Residue_score = []
+    for i in polish_cases_0:
+        Residue_score.append(int(i.split('Residue:')[-1]))
+
+    Residue_score = np.asarray(Residue_score)
+    polish_cases_residue = np.where(Residue_score == Residue_score.min())[0]
+
+    polish_cases_1 = []
+    for i in polish_cases_residue:
+        polish_cases_1.append(polish_cases_0[i])
+
+    if len(polish_cases_1) > 1:
+        select_case = polish_cases_1[random.randint(0,len(polish_cases_1)-1)]
+
+    else: select_case = polish_cases_1[0]
+
+    print ("The best grid right now is "+select_case.split('R:')[0])
+    print ("It has the score R:"+select_case.split('R:')[-1])
+    return select_case.split('R:')[0]
+
+
+Total_jobs = len(directory_list)
+Half_total_jobs = Total_jobs // 2
+percent97_total_jobs = Total_jobs * 97 //100
+half_finished = False
+percent97_finished = False
+
+while half_finished == False:
+    
+    if job_count() < Half_total_jobs:
+        pass
+    else:
+        selected_job_directory1 = case_select()
+        os.system("mkdir Autobuild1")
+        os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory1+"result.pdb Autobuild1")
+        os.chdir("Autobuild1")
+        autobuild_cl = 'python autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+str(coreNumber)+' -pdb result.pdb'
+        os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
+        os.chdir(original_path)
+        half_finished = True
+
+
+while percent97_finished == False:
+    
+    if job_count() < percent97_total_jobs:
+        pass
+    else:
+        percent97_total_jobs = True
+        selected_job_directory2 = case_select()
+        if selected_job_directory2 == selected_job_directory1:
+            break
+        else:
+            os.system("mkdir Autobuild2")
+            os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory2+"result.pdb Autobuild2")
+            os.chdir("Autobuild2")
+            autobuild_cl = 'python autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+coreNumber+' -pdb result.pdb'
+            os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
+            os.chdir(original_path)
+            percent97_finished = True
+
+
+
+
+
+
+
+
+   
+        

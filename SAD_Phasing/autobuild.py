@@ -29,11 +29,6 @@ if args.reflection_mtz:
 else:
     print('Please pass reflection file')
 
-# if args.original_reflection_mtz:
-#     originalReflectionFile = args.original_reflection_mtz
-# else:
-#     print("Please pass original reflection file to merge")
-
 if args.sequence_file:
     sequenceFile = args.sequence_file
 else:
@@ -95,7 +90,7 @@ for i in range(len(list)):
         original = list[i].split('=')[1]
         list[i] = list[i].replace(original, SPACE_GROUP)
     
-    elif 'rebuild_in_place =' in list[i]:
+    elif ' rebuild_in_place =' in list[i]:
         original = list[i].split('=')[1]
         list[i] = list[i].replace(original, ' Auto True *False ')
 
