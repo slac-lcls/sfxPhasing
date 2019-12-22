@@ -1,4 +1,4 @@
-# Get Start
+# Getting Started
 The prepared data for SAD in Stanford Box is in a2a_S_SAD and strep_v2 folder. Each of them contains a reflection data (.mtz) and a sequence file (.seq). 
 
 For a2a_S_SAD:
