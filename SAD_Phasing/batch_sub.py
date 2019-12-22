@@ -32,6 +32,7 @@ parser.add_argument("-DSUL_R","--disulfide-range", nargs = '+', help='input the 
 parser.add_argument("-RESOL_R","--resolution-range", nargs = '+', help='input the range of the resolution range (optional)',type = str)
 parser.add_argument("-THRE_R","--threshold-range", nargs = '+', help='input the range of the threshold range (optional)',type = str)
 parser.add_argument("-ATOM_R","--atom-range", nargs = '+', help='input the range of the atom number range (optional)',type = str)
+parser.add_argument("-AutoBuild","--AutoBuild-polish", help = 'type N if you do not want it and type Y if you like it',type = str)
 
 args = parser.parse_args()
 
@@ -107,14 +108,16 @@ for i in protein:
     elif i=='C':
         double_sulfur_number+=1
         
+max_DSUL = 0
+SE_num = 0
 if single_S_or_SE_number == 0:
     if args.number_of_atoms:
         SE_num = args.number_of_atoms
         max_DSUL = double_sulfur_number/2
         max_S = single_S_or_SE_number+double_sulfur_number
     else:
-        print("There is no methionine in this protein. Please enter the number of heavy atoms using -na")
-        sys.exit()
+        print("There is no methionine in this protein. Please enter the number of heavy atoms using -ATOM_R")
+        #sys.exit()
 
 else :
     max_DSUL = double_sulfur_number/2
@@ -205,9 +208,9 @@ if max_DSUL > 0 and atomType == 'S':
 #Do not consider DSUl parameter
 elif max_DSUL == 0 or atomType != 'S':
     print ('0 disulfide bond found or the atom type you are looking for is not Sulfur. Do not consider the grid search for disulfied number')
-    for thre in [0.3]:#thre_range:
-        for resolution in [2.8,2.9,3.0]:#resolution_range:
-            for number in [8]:#atom_find:
+    for thre in thre_range:
+        for resolution in resolution_range:
+            for number in atom_find:
                 directory = 'threshold'+str(thre)+'/resolution'+str(resolution)+'/atom_number'+str(number)
                 directory_list.append(directory)
 
@@ -255,7 +258,7 @@ def case_select ():
 
     R_score = []
     for result in results:
-        R_score.append(float(result.split('R_free:')[-1].split('/')[0]))
+        R_score.append(round(float(result.split('R_free:')[-1].split('/')[0]),3))
 
     R_score = np.asarray(R_score)
     polish_cases_Rfree = np.where(R_score == R_score.min())[0]
@@ -269,16 +272,33 @@ def case_select ():
         Residue_score.append(int(i.split('Residue:')[-1]))
 
     Residue_score = np.asarray(Residue_score)
-    polish_cases_residue = np.where(Residue_score == Residue_score.min())[0]
+    polish_cases_residue = np.where(Residue_score == Residue_score.max())[0]
 
     polish_cases_1 = []
     for i in polish_cases_residue:
         polish_cases_1.append(polish_cases_0[i])
 
+    #return polish_cases_1
+    resolution_filter = []
     if len(polish_cases_1) > 1:
-        select_case = polish_cases_1[random.randint(0,len(polish_cases_1)-1)]
+        for i in polish_cases_1:
+            resolution_filter.append(float(i.split('resolution')[-1].split('/atom')[0]))
+        resolution_filter = np.asarray(resolution_filter)
+        polish_cases_resolution = np.where(resolution_filter == resolution_filter.min())[0]
+    
+    
+        polish_cases_2 = []
+        for i in polish_cases_resolution:
+            polish_cases_2.append(polish_cases_1[i])
+            #print("have to pick randomly")
+        if len(polish_cases_2) > 1:
+            print("have to pick randomly")
+            select_case = polish_cases_2[random.randint(0,len(polish_cases_2)-1)]
 
-    else: select_case = polish_cases_1[0]
+        else: select_case = polish_cases_2[0]
+            
+    else:
+        select_case = polish_cases_1[0]
 
     print ("The best grid right now is "+select_case.split('R:')[0])
     print ("It has the score R:"+select_case.split('R:')[-1])
@@ -296,14 +316,16 @@ while half_finished == False:
     if job_count() < Half_total_jobs:
         pass
     else:
+	
         selected_job_directory1 = case_select()
-        os.system("mkdir Autobuild1")
-        os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory1+"result.pdb Autobuild1")
-        os.chdir("Autobuild1")
-        autobuild_cl = 'python autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+str(coreNumber)+' -pdb result.pdb'
-        os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
-        os.chdir(original_path)
-        half_finished = True
+        if args.AutoBuild_polish != 'N':
+            os.system("mkdir Autobuild1")
+            os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory1+"result.pdb Autobuild1")
+            os.chdir("Autobuild1")
+            autobuild_cl = 'python autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+str(coreNumber)+' -pdb result.pdb'
+            os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
+            os.chdir(original_path)
+            half_finished = True
 
 
 while percent97_finished == False:
@@ -316,13 +338,14 @@ while percent97_finished == False:
         if selected_job_directory2 == selected_job_directory1:
             break
         else:
-            os.system("mkdir Autobuild2")
-            os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory2+"result.pdb Autobuild2")
-            os.chdir("Autobuild2")
-            autobuild_cl = 'python autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+coreNumber+' -pdb result.pdb'
-            os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
-            os.chdir(original_path)
-            percent97_finished = True
+            if args.AutoBuild_polish != 'N':
+                os.system("mkdir Autobuild2")
+                os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory2+"result.pdb Autobuild2")
+                os.chdir("Autobuild2")
+                autobuild_cl = 'python autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+coreNumber+' -pdb result.pdb'
+                os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
+                os.chdir(original_path)
+                percent97_finished = True
 
 
 
