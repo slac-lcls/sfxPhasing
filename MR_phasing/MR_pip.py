@@ -203,7 +203,7 @@ number_of_chains = 1
 component_number = 1
 
 if args.component_count:
-    number_of_chains = args.component_count
+    number_of_chains = component_num
     for i in range(number_of_chains):
         component_number = str(i+1)
         dictionary_string = str(my_temp['composition']['component'])
@@ -219,7 +219,7 @@ if args.chains_count:
 if args.number_of_cores:
     my_temp['queue']['cpus'] = args.number_of_cores
 
-for i in range(1, (args.component_count) +1):
+for i in range(1, component_num +1):
 
     #get attribute of pdb
     get_arg_ensemble_pdb = getattr(args, 'component'+str(i)+'_ensemble_pdb')
@@ -322,7 +322,7 @@ for key in my_mtz:
 for i in my_temp:
     my_string = i + '=' +json.dumps(my_temp[i])
 
-    for j in range (1,(args.component_count)+1):
+    for j in range (1,component_num+1):
         k = str(j)
         if 'component'+k in my_string:
             my_string = my_string.replace('component'+k,'component')
@@ -401,4 +401,3 @@ for i in result:
     
 os.chdir(args.path)
 print(result_statement.replace(args.path,''),file=open('final_result.txt','a'))
-    

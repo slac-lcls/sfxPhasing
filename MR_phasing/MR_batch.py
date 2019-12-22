@@ -211,4 +211,3 @@ elif component_num > 1:
                 #print(cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels)
                 os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log python MR_pip.py -rfl '+rfl_file+' '+cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
                 os.chdir("../../..")
-
