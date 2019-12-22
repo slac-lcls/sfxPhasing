@@ -9,7 +9,7 @@ Note: since the sequence file for this case contains methionine (M) and cystine 
 
 For strep_v2:
 
-Type: python batch_sub.py -rfl cxic0415_sz_ccp4IF.mtz -seq strep_mono.fasta.txt -SFAC Se -q psanaq -n 12 -na 4. 
+Type: python batch_sub.py -rfl cxic0415_sz_ccp4IF.mtz -seq strep_mono.fasta.txt -SFAC Se -q psanaq -n 12 -ATOM_R 3 5. 
 
 Note: Here tying the -na parameter is crucial. Because the script cannot get M and C from the sequence file in this case. If you do you input -na, there will be an error saying that M cannot be found so please input the atoms number. If you are not sure, just enter some number reasonable. If you input N, it will scan through N-2 to N+2.
 
