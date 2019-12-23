@@ -16,10 +16,10 @@ Note: Here tying the -ATOM_R parameter is crucial. Because the script cannot get
 When users type this command line. The terminal will show the submitted jobs. After the jobs are submitted, the terminal will stop there and wait for 50% jobs finished. While waiting, the results of the finished jobs will be summarized in a file called final_result.txt. For each finished job, it contains the information of R/Rfree and residue number.If users add -AutoBuild N to the above command line, he or she will just get a printed line saying:
   The best grid right now is:
   It has the score R: and Rfree: .
-Without adding the -AutoBuild input or if you type -AutoBuild Y, besides the above result sentence, the the best jobs will immediately sent to the Autobuild to do refinement and there will be a folder called Autobuild1. 
+Without adding the -AutoBuild input or if you type -AutoBuild Y, besides the above result sentence, the best jobs will immediately sent to the Autobuild to do refinement and there will be a folder called Autobuild1. 
 Same thing will be processed when 97% of the jobs are finished. If the selected job is the same as the one selected when 50% of the jobs are finished, the program will be over. If the selected job for this round is different, it will be sent to Autobuild and users can find a Autobuild2 folder. 
 
-Therefore, maximumly there will be two folder of Autobuild. Users can also inspect the final_result.txt to see the overall pattern of the result. 
+Therefore, maximumly there will be two folders of Autobuild. Users can also inspect the final_result.txt to see the overall pattern of the result. 
 
 # batch.py and parameter.json
 
