@@ -11,7 +11,15 @@ For strep_v2:
 
 Type: python batch_sub.py -rfl cxic0415_sz_ccp4IF.mtz -seq strep_mono.fasta.txt -SFAC Se -q psanaq -n 12 -ATOM_R 3 5. 
 
-Note: Here tying the -na parameter is crucial. Because the script cannot get M and C from the sequence file in this case. If you do you input -na, there will be an error saying that M cannot be found so please input the atoms number. If you are not sure, just enter some number reasonable. If you input N, it will scan through N-2 to N+2.
+Note: Here tying the -ATOM_R parameter is crucial. Because the script cannot get M and C from the sequence file in this case. If you do you input -ATOM_R, there will be an error saying that M cannot be found so please input the atoms number. If you type -ATOM_R 3 5, the scan range for the heavy site atoms will be from 3, 4, 5. When Methionine can be found in the sequence file, -ATOM_R N1 N2 does not have to be filled because the scanning range of the atom number will be from 1 to the overall number of M. Users can still use this parameter in case they have more specific idea of the number of atoms. 
+
+When users type this command line. The terminal will show the submitted jobs. After the jobs are submitted, the terminal will stop there and wait for 50% jobs finished. While waiting, the results of the finished jobs will be summarized in a file called final_result.txt. For each finished job, it contains the information of R/Rfree and residue number.If users add -AutoBuild N to the above command line, he or she will just get a printed line saying:
+  The best grid right now is:
+  It has the score R: and Rfree: .
+Without adding the -AutoBuild input or if you type -AutoBuild Y, besides the above result sentence, the the best jobs will immediately sent to the Autobuild to do refinement and there will be a folder called Autobuild1. 
+Same thing will be processed when 97% of the jobs are finished. If the selected job is the same as the one selected when 50% of the jobs are finished, the program will be over. If the selected job for this round is different, it will be sent to Autobuild and users can find a Autobuild2 folder. 
+
+Therefore, maximumly there will be two folder of Autobuild. Users can also inspect the final_result.txt to see the overall pattern of the result. 
 
 # batch.py and parameter.json
 
