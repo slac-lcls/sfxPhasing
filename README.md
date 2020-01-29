@@ -17,6 +17,8 @@ pymol version: 2.3.4
 ## Python version:
 python: 2.7.15
 
+## Datasets:
+
 Download example data sfxPhasing.zip from here (by invitation only): 
 https://stanford.box.com/s/8s55n5smgxb7gt00ihzoj241qgk1bocl
 
