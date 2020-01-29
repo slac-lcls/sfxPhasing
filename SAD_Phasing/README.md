@@ -50,7 +50,7 @@ Firstly, It passed reflection file and all of the mentioned paramters to SHELX_s
 
 If the SHELX produced the appropriate files (does not necessarily containing the correct information), Se_SAD_automation.py will arouse the Crank2.py. No matter what Crank2.py will one of three possibilities:
 1) 'Majority of model was successfully built!'. This means the reconstruction is on the right track and Rfree value is converging at leat below 0.4. Further refinement using Autobuild will be meaningful to do based on users' preference.
-2) 'Wrong substructure or very weak phases suspected: the model building seems unsuccessful'. It means crank2 has tried but cannot reach to a converged R/Rfree value within the given amount of cycle. 
+2) 'Wrong substructure or very weak phases suspected: the model building seems unsuccessful' or 'partially built' It means crank2 has tried but cannot reach to a converged R/Rfree value within the given amount of cycle. 
 3) Any possible file parsing or parameter extraction error. Developers will inspect it continuously.
 
 If 1) is the case, the result will be put at the directory in which batch_sub.py locates. And finally there will be a file called "final_result.txt" containing all the successful case and their corresponding R/Rfree value.
