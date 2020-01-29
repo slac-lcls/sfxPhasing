@@ -320,7 +320,7 @@ percent97_finished = False
 
 while half_finished == False:
     
-    if job_count() < Half_total_jobs:
+    if job_count() < max(1,Half_total_jobs):
         pass
     else:
 	
@@ -337,7 +337,7 @@ while half_finished == False:
 
 while percent97_finished == False:
     
-    if job_count() < percent97_total_jobs:
+    if job_count() < max(1,percent97_total_jobs):
         pass
     else:
         percent97_total_jobs = True
