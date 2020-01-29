@@ -155,6 +155,13 @@ thre_range = np.linspace(0.2,0.4,3) #(0.2,0.5,4)
 
 
 ################################# Update the grid range if asked by users ##############################
+
+def get_range(x,y):
+    if x == y:
+        return np.array([x])
+    else:
+        return np.arange(x,y+0.1,0.1)
+
 if args.disulfide_range:
     if atomType == 'S':
         DSUL_range = range(int(args.disulfide_range[0]),int(args.disulfide_range[1])+1)
@@ -165,7 +172,7 @@ else:
     
     
 if args.resolution_range:
-    resolution_range = np.arange(round(float(args.resolution_range[0]),1),round(float(args.resolution_range[1])+0.1,1),0.1)
+    resolution_range = get_range(round(float(args.resolution_range[0]),1),round(float(args.resolution_range[1]),1))
 else:
     print("Defualt resolution search range will be used")
     
@@ -176,7 +183,7 @@ else:
     print("Defualt atom number search range will be used")
     
 if args.threshold_range:
-    thre_range = np.arange(round(float(args.threshold_range[0]),1),round(float(args.threshold_range[1])+0.1,1),0.1)
+    thre_range = get_range(round(float(args.threshold_range[0]),1),round(float(args.threshold_range[1]),1))
 else:
     print("Defualt threshold search range will be used")
 
