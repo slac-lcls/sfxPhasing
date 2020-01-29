@@ -7,12 +7,14 @@ Later the Autobuild refinement will be considered to further refine the protein 
 
 Examples contain the SAD example of Streptavidin and the MR example of 4N5R which is a lysozyme example.
 
-Package and versions:
+## Package and versions:
 phenix version: 1.16
+
 ccp4 version: 7.0 (including SHELX and Crank2)
+
 pymol version: 2.3.4
 
-Python version:
+## Python version:
 python: 2.7.15
 
 Download example data sfxPhasing.zip from here (by invitation only): 
