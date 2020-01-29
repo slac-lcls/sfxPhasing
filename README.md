@@ -10,7 +10,7 @@ Examples contain the SAD example of Streptavidin and the MR example of 4N5R whic
 ## Package and versions:
 phenix version: 1.16
 
-ccp4 version: 7.0 (It includes SHELX and Crank2)
+ccp4 version: 7.0.077 (It includes SHELXC version:2016/1, SHELXD version:2013/2, and Crank2 version:2.0.229)
 
 pymol version: 2.3.4
 
