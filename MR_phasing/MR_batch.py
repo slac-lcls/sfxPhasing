@@ -24,6 +24,9 @@ parser.add_argument("-pdb","--pdb-file", nargs='+', help="input the pdb file",ty
 parser.add_argument("-seq","--sequence-file", nargs='+', help="input the sequence file",type = str)
 parser.add_argument("-q", "--queue", help = "input the computing queue you want to use", type = str)
 parser.add_argument("-n", "--number-of-cores", help = "input the number of core you want to use", type = str)
+parser.add_argument("-RESOL_R","--resolution-range", nargs = '+', help='input the range of the resolution range (optional)',type = str)
+parser.add_argument("-RMSD_R","--rmsd-range", nargs = '+', help='input the range of the rmsd range (optional)',type = str)
+
 
 args = parser.parse_args()
 
@@ -61,14 +64,21 @@ if len(pdb_list) != len(seq_list):
     print("Number of pdb files is different from the sequence files. Recheck the entering files")
     sys.exit()
     
+rmsd_low = str(0.5)
+rmsd_high = str(2.0)
 
+if args.rmsd_range:
+    rmsd_low = str(round(float(args.rmsd_range[0]),1))
+    rmsd_high = str(round(float(args.rmsd_range[1]),1))
+else:
+    print("Defualt rmsd 0.5-2.0 search range will be used")
 
 component_num = len(pdb_list)
 
 input_file = {}
 for i in range(1,component_num+1):
     input_file['component'+str(i)] = {}
-    input_file['component'+str(i)]={"pdb":pdb_list[i-1],"rmsd":"0.5:2.0","seq":seq_list[i-1]}
+    input_file['component'+str(i)]={"pdb":pdb_list[i-1],"rmsd":rmsd_low+":"+rmsd_high,"seq":seq_list[i-1]}
     input_file['component number'] = component_num
 
 
@@ -107,7 +117,10 @@ with open('FILE_SETUP.json') as json_file:
     for i in range(1,component_num+1):
         start = round(float(parameter['component'+str(i)]["rmsd"].split(':')[0]),1)
         end = round(float(parameter['component'+str(i)]["rmsd"].split(':')[1]),1)
-        rmsd_dict['rmsd'+str(i)]=np.around(np.arange(start,end+0.1,0.1),1)
+        if start == end:
+            rmsd_dict['rmsd'+str(i)]=np.around(np.array([start]),1)
+        else:
+            rmsd_dict['rmsd'+str(i)]=np.around(np.arange(start,end,0.1),1)
 
 
 ##################################### Get request copy number range ############################################
@@ -156,10 +169,26 @@ total_request_copy_list = range(min_overall_asu_count,max_overall_asu_count+1)
 for directory in os.listdir(os.getcwd()):
     if 'Request_' in directory:
         shutil.rmtree(directory)
+        
+###################################################################################################
+##Creating the user-defined range if any
+def get_range(x,y):
+    if x == y:
+        return np.array([x])
+    else:
+        return np.arange(x,y+0.1,0.1)
+# Define 
+if args.resolution_range:
+    resolution_range = get_range(round(float(args.resolution_range[0]),1),round(float(args.resolution_range[1]),1))
+else:
+    print("Defualt resolution search range will be used")
+
+print ("copy list:"+str(total_request_copy_list))
+print ("rmsd range:"+str(rmsd_dict['rmsd1']))
+print ("Resolution range:"+str(resolution_range))
 ###################################################################################################
 if component_num == 1:
     rmsd_range = rmsd_dict['rmsd1']
-            
 #create each grid as a directory
     for i in total_request_copy_list:
         for j in rmsd_range:
@@ -168,8 +197,6 @@ if component_num == 1:
                 os.system('mkdir -p '+directory)
                 os.system('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[0]+' '+seq_list[0]+' '+'FILE_SETUP.json'+' '+directory)
                 os.chdir("./"+directory)
-        #bsub -q psanaq -n 12 -o %J.log 
-                #os.system('python MR_pip.py -rfl '+refl_file_input+' -pdbE1 '+pdb_file_input+' -seq1 '+seq_file_input+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+args.resolution+' -labin '+data_labels)
                 os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log python MR_pip.py -rfl '+rfl_file+' -pdbE1 '+pdb_list[0]+' -seq1 '+seq_list[0]+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
                 os.chdir("../../..")
 
