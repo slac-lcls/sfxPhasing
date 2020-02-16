@@ -24,8 +24,8 @@ parser.add_argument("-pdb","--pdb-file", nargs='+', help="input the pdb file",ty
 parser.add_argument("-seq","--sequence-file", nargs='+', help="input the sequence file",type = str)
 parser.add_argument("-q", "--queue", help = "input the computing queue you want to use", type = str)
 parser.add_argument("-n", "--number-of-cores", help = "input the number of core you want to use", type = str)
-parser.add_argument("-RESOL_R","--resolution-range", nargs = '+', help='input the range of the resolution range (optional)',type = str)
-parser.add_argument("-RMSD_R","--rmsd-range", nargs = '+', help='input the range of the rmsd range (optional)',type = str)
+parser.add_argument("-res","--resolution_range", nargs = '+', help='input the range of the resolution range (optional)',type = str)
+parser.add_argument("-rmsd","--rmsd_range", nargs = '+', help='input the range of the rmsd range. Default: 0.5 2.0 (optional)',type = str)
 
 
 args = parser.parse_args()
@@ -64,14 +64,12 @@ if len(pdb_list) != len(seq_list):
     print("Number of pdb files is different from the sequence files. Recheck the entering files")
     sys.exit()
     
-rmsd_low = str(0.5)
-rmsd_high = str(2.0)
-
 if args.rmsd_range:
     rmsd_low = str(round(float(args.rmsd_range[0]),1))
     rmsd_high = str(round(float(args.rmsd_range[1]),1))
 else:
-    print("Defualt rmsd 0.5-2.0 search range will be used")
+    rmsd_low = str(0.5)
+    rmsd_high = str(2.0)
 
 component_num = len(pdb_list)
 
@@ -104,12 +102,13 @@ for line in split_out:
         resolution = round(float(line.decode("utf-8").split(' ')[-1]),1)
 
 # Create the grid of resolution
-resolution_range = []
-for i in np.arange(resolution, resolution+1.5, 0.1):
-    resolution_range.append(round(i,1))
+if args.resolution_range:
+    resolution_range = get_range(round(float(args.resolution_range[0]),1),round(float(args.resolution_range[1]),1))
+else:
+    for i in np.arange(resolution, resolution+1.5, 0.1):
+        resolution_range.append(round(i,1))
 
 print('Creating rmsd scanning range')
-#parameter = {}
 rmsd_dict = {}
 rmsd_list = []
 with open('FILE_SETUP.json') as json_file:
@@ -151,8 +150,6 @@ for i in range(len(pdb_list)):
         if "Data labels" in line:
             data_labels = line.split(':')[1].replace(' ','')
 
-
-#print(asu_copy_dict)
 uncertainty = 1
 
 max_overall_asu_count = max(list(asu_copy_dict.values()))+uncertainty
@@ -160,8 +157,6 @@ if (min(list(asu_copy_dict.values()))-uncertainty) == 0:
     min_overall_asu_count = 1
 else:
     min_overall_asu_count = min(list(asu_copy_dict.values()))-uncertainty
-
-#print (overall_asu_count)
 
 total_request_copy_list = range(min_overall_asu_count,max_overall_asu_count+1)
 
@@ -177,11 +172,6 @@ def get_range(x,y):
         return np.array([x])
     else:
         return np.arange(x,y+0.1,0.1)
-# Define 
-if args.resolution_range:
-    resolution_range = get_range(round(float(args.resolution_range[0]),1),round(float(args.resolution_range[1]),1))
-else:
-    print("Defualt resolution search range will be used")
 
 print ("copy list:"+str(total_request_copy_list))
 print ("rmsd range:"+str(rmsd_dict['rmsd1']))
