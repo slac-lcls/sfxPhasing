@@ -71,6 +71,15 @@ else:
     rmsd_low = str(0.5)
     rmsd_high = str(2.0)
 
+##Creating the user-defined range if any
+def get_range(x,y):
+    if x == y:
+        return np.array([x])
+    else:
+        return np.arange(x,y+0.1,0.1)
+
+
+
 component_num = len(pdb_list)
 
 input_file = {}
@@ -166,13 +175,6 @@ for directory in os.listdir(os.getcwd()):
         shutil.rmtree(directory)
         
 ###################################################################################################
-##Creating the user-defined range if any
-def get_range(x,y):
-    if x == y:
-        return np.array([x])
-    else:
-        return np.arange(x,y+0.1,0.1)
-
 print ("copy list:"+str(total_request_copy_list))
 print ("rmsd range:"+str(rmsd_dict['rmsd1']))
 print ("Resolution range:"+str(resolution_range))
