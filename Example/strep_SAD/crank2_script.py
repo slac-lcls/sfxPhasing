@@ -10,9 +10,13 @@ import ast
 if os.path.isfile("crank2.inp"):
     os.remove("crank2.inp")
 
+# Find crank2.py in external ccp4 package
+stream=os.popen('which crank')
+output = stream.read()
+myccp4 = output.split('bin')[0]
+mycrank2=os.path.join(myccp4,'share/ccp4i2/pipelines/crank2/crank2/crank2.py')
+
 parser= argparse.ArgumentParser()
-
-
 parser.add_argument("-rfl","--reflection-mtz", help="input the mtz file of reflection", type = str)
 parser.add_argument("-pdb","--pdb-file",help="input the pdb file",type = str)
 parser.add_argument("-seq","--sequence-file",help="input the sequence file",type = str)
@@ -57,6 +61,6 @@ crank_inp_file = [line1, line2, line3, line4, line5, line6]
 for i in crank_inp_file:
     print(i,file=open("crank2.inp", "a"))
 
-command = 'python /reg/common/package/ccp4/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
+command = 'python '+mycrank2+' --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
 
 os.system(command)
