@@ -13,6 +13,9 @@ if os.path.isfile("crank2.inp"):
 # Find crank2.py in external ccp4 package
 stream=os.popen('which crank')
 output = stream.read()
+if not output:
+    print("crank in ccp4 not found. Please make sure you have ccp4 installed.")
+    exit()
 myccp4 = output.split('bin')[0]
 mycrank2=os.path.join(myccp4,'share/ccp4i2/pipelines/crank2/crank2/crank2.py')
 
