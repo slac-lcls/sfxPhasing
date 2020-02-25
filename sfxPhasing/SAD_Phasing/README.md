@@ -11,7 +11,7 @@ For strep_v2:
 
 Type: python batch_sub.py -rfl cxic0415_sz_ccp4IF.mtz -seq strep_mono.fasta.txt -SFAC Se -q psanaq -n 12 -ATOM_R 3 5. 
 
-Note1: Here tying the -ATOM_R parameter is crucial. Because the script cannot get M and C from the sequence file in this case. If you do not input -ATOM_R, there will be an error saying that M cannot be found so please input the atoms number for the data file cxic0415_sz_ccp4IF.mtz and strep_mono.fasta.txt. If you type -ATOM_R 3 5, the scan range for the heavy site atoms will be from 3, 4, 5. When Methionine can be found in the sequence file, -ATOM_R N1 N2 does not have to be filled because the scanning range of the atom number will be from 1 to the overall number of M. Users can still use this parameter in case they have more specific idea of the number of atoms. 
+Note1: Here tying the -ATOM_R parameter is crucial. Because the script cannot get methionine (M) and cystine (C) from the sequence file in this case. If you do not input -ATOM_R, there will be an error saying that M cannot be found so please input the number of atoms for the data file cxic0415_sz_ccp4IF.mtz and strep_mono.fasta.txt. If you type -ATOM_R 3 5, the scan range for the heavy site atoms will be from 3, 4, 5. When Methionine can be found in the sequence file, -ATOM_R N1 N2 does not have to be filled because the scanning range of the atom number will be from 1 to the overall number of M. Users can still use this parameter in case they have more specific idea of the number of atoms. 
 
 Note2: In cases users want to look for specifically the grid happening at resolution 2.8 or say atom number of 4, just type: -RESOL_R 2.8 2.8 or ATOM_R 4 4 respetively.
 
