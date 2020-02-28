@@ -1,11 +1,11 @@
 # sfxPhasing
 
-MR_phasing stands for Molecular Replacement Automated Phasing Pipeline. It includes the Phenix.MRage and automatically for the grid search for user's defined parameter.
+MR_phasing refers to Molecular Replacement Automated Phasing Pipeline. It runs Phenix.MRage with automatic grid search and/or with user defined parameters.
 
-SAD_phasing stands for the Single-wavelength anomalous dispersion Automated Phasing Pipeline with heavy atoms of Selenium (Se) or Sulfur (S). It includes 2 separated modules: SHELXC/D, Crank2.
-Later the Autobuild refinement will be considered to further refine the protein model.
+SAD_phasing refers to Single-wavelength Anomalous Dispersion Automated Phasing Pipeline with heavy atoms of Selenium (Se) or Sulfur (S). It uses 2 programs: SHELXC/D, Crank2.
+Later Autobuild refinement may further refine the protein model.
 
-Examples contain the SAD example of Streptavidin and the MR example of 4N5R which is a lysozyme example.
+Examples contain a Se-SAD example of Selenobiotinyl-Streptavidin and an MR example of 4N5R lysozyme.
 
 ## Required External Packages:
 The following packages are required to run sfxPhasing scripts.
