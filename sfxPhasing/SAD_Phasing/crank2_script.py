@@ -120,14 +120,16 @@ for i in crank_inp_file:
 #############################################################################################################
 
 #################################### Run Crank2 ###############################################################
-command = 'python /reg/common/package/ccp4/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
+#command = 'python2.7 /reg/common/package/ccp4/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
+command = 'python2.7 /project/projectdirs/m3506/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
 
 process = subprocess.Popen(command, 
                           stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,shell=True)
 
 out,err = process.communicate()
-
+print(out)
+print(err)
 split_out=out.splitlines()
 #os.system(command)
 # for line in split_out:

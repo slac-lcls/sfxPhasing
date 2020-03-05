@@ -68,7 +68,7 @@ if args.esel:
     eSel = args.esel
     
     
-shelx_CD = 'python SHELX_script.py  -rfl '+reflectionFile+' -MIND1 '+args.mind_atom+' -MIND2 '+args.mind_symm+' -resl '+str(resolution)+' -lresl '+args.low_resolution_cut+' -TEST 0 99 -ESEL '+eSel+' -SFAC '+atomType+' -NTRY 5000 -FIND '+str(atom_find)+' -DSUL '+str(dsul)+' -thre '+args.threshold
+shelx_CD = 'python2.7 SHELX_script.py  -rfl '+reflectionFile+' -MIND1 '+args.mind_atom+' -MIND2 '+args.mind_symm+' -resl '+str(resolution)+' -lresl '+args.low_resolution_cut+' -TEST 0 99 -ESEL '+eSel+' -SFAC '+atomType+' -NTRY 5000 -FIND '+str(atom_find)+' -DSUL '+str(dsul)+' -thre '+args.threshold
 
 os.system(shelx_CD)
 
@@ -89,9 +89,12 @@ else:
     sys.exit()
 
 # run crank2
-crank2_cl = 'python crank2_script.py -rfl '+reflectionFile+' -pdb '+new_pdb+' -seq '+sequenceFile+' -atype '+atomType+' -P '+args.path
-os.system(crank2_cl)
-
+crank2_cl = 'python2.7 crank2_script.py -rfl '+reflectionFile+' -pdb '+new_pdb+' -seq '+sequenceFile+' -atype '+atomType+' -P '+args.path
+#os.system(crank2_cl)
+process = subprocess.Popen(crank2_cl, stdout = subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+out,err = process.communicate()
+print(out)
+print(err)
 # check whether crank2 works
 os.chdir('crank2')
 content = open('crank.loggraph','r').read()

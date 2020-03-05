@@ -130,11 +130,13 @@ process = subprocess.Popen('phenix.mtz.dump '+reflectionFile,
                            stderr=subprocess.PIPE,shell=True)
 
 out,err = process.communicate()
-
+print(err)
+print(out)
 split_out=out.splitlines()
 
 for line in split_out:
-    if 'Resolution range' in line:
+    if b'Resolution range' in line:
+        print(line)
         resolution = round(float(line.split(' ')[-1]),1)
         
 
@@ -237,7 +239,12 @@ for i in range(len(directory_list)):
     os.system('mkdir -p '+directory_list[i])
     os.system('cp Se_SAD_automation.py SHELX_script.py crank2_script.py autobuild.py '+sequenceFile+' '+reflectionFile+' '+directory_list[i])  
     os.chdir("./"+directory_list[i])
-    os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+command_list[i])
+    print(os.getcwd())
+    #os.system('srun -A m3506 -C haswell -q '+computeQueue+' --cores-per-socket '+coreNumber+' -o %J.log '+command_list[i])
+    process = subprocess.Popen('srun -A m3506 -C haswell -q '+computeQueue+' --cores-per-socket '+coreNumber+' -o %J.log '+command_list[i], stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+    out,err = process.communicate()
+    print(out)
+    print(err)
     os.chdir(original_path)    
     
     
@@ -326,11 +333,12 @@ while half_finished == False:
 	
         selected_job_directory1 = case_select()
         if args.AutoBuild_polish != 'N':
+            print('Hello2')
             os.system("mkdir Autobuild1")
             os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory1+"result.pdb Autobuild1")
             os.chdir("Autobuild1")
             autobuild_cl = 'python autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+str(coreNumber)+' -pdb result.pdb'
-            os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
+            os.system('srun -A m3506  -C haswell -q '+computeQueue+' --cores-per-socket= '+coreNumber+' -o %J.log '+autobuild_cl)
             os.chdir(original_path)
             half_finished = True
 
@@ -346,11 +354,16 @@ while percent97_finished == False:
             break
         else:
             if args.AutoBuild_polish != 'N':
+                print('Hello')
                 os.system("mkdir Autobuild2")
                 os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory2+"result.pdb Autobuild2")
                 os.chdir("Autobuild2")
                 autobuild_cl = 'python autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+coreNumber+' -pdb result.pdb'
-                os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
+                #os.system('srun -A m3506 -C haswell -q '+computeQueue+' --cores-per-socket '+coreNumber+' -o %J.log '+autobuild_cl)
+                process = subprocess.Popen('srun -A m3506 -C haswell -q '+computeQueue+' --cores-per-socket '+coreNumber+' -o %J.log '+autobuild_cl, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+                out,err = process.communicate()
+                print(out)
+                print(err)
                 os.chdir(original_path)
                 percent97_finished = True
 
