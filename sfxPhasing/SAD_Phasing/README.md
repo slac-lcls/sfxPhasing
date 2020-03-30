@@ -3,13 +3,13 @@ The prepared data for SAD in Stanford Box is in a2a_S_SAD and strep_v2 folder. E
 
 For a2a_S_SAD:
 
-Type: python batch_sub.py -rfl a2a.mtz -seq a2a.fasta -SFAC S -q psanaq -n 12 
+Type: python batch_sub.py -rfl a2a.mtz -seq a2a.fasta -SFAC S -q psanaq -n 12 -Host lcls
 
 Note: since the sequence file for this case contains methionine (M) and cystine (C). The DSUL parameter and heavy atom number for SHELX search will be read directly from sequence file and forming grids. -SFAC is the atom type. It is case insensitive.
 
 For strep_v2:
 
-Type: python batch_sub.py -rfl cxic0415_sz_ccp4IF.mtz -seq strep_mono.fasta.txt -SFAC Se -q psanaq -n 12 -ATOM_R 3 5. 
+Type: python batch_sub.py -rfl cxic0415_sz_ccp4IF.mtz -seq strep_mono.fasta.txt -SFAC Se -q psanaq -n 12 -ATOM_R 3 5 -Host lcls
 
 Note1: Here tying the -ATOM_R parameter is crucial. Because the script cannot get methionine (M) and cystine (C) from the sequence file in this case. If you do not input -ATOM_R, there will be an error saying that M cannot be found so please input the number of atoms for the data file cxic0415_sz_ccp4IF.mtz and strep_mono.fasta.txt. If you type -ATOM_R 3 5, the scan range for the heavy site atoms will be from 3, 4, 5. When Methionine can be found in the sequence file, -ATOM_R N1 N2 does not have to be filled because the scanning range of the atom number will be from 1 to the overall number of M. Users can still use this parameter in case they have more specific idea of the number of atoms. 
 
