@@ -72,9 +72,11 @@ else:
 if args.host == 'lcls':
     job_submitter = 'bsub'
     python_run = 'python'
+    core_selector = ' -n '
 elif args.host == 'cori':
-    job_submitter = 'srun'
+    job_submitter = 'srun -A m3506 -C haswell'
     python_run = 'python2.7'
+    core_selector = ' --cores-per-socket '
 else:
     print ('You have to enter the host: either lcls or cori')
     sys.exit()
@@ -248,7 +250,7 @@ for i in range(len(directory_list)):
     os.system('mkdir -p '+directory_list[i])
     os.system('cp Se_SAD_automation.py SHELX_script.py crank2_script.py autobuild.py '+sequenceFile+' '+reflectionFile+' '+directory_list[i])  
     os.chdir("./"+directory_list[i])
-    os.system(job_submitter+' -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+command_list[i])
+    os.system(job_submitter+' -q '+computeQueue+core_selector+coreNumber+' -o %J.log '+command_list[i])
     os.chdir(original_path)    
     
     
@@ -341,7 +343,7 @@ while half_finished == False:
             os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory1+"result.pdb Autobuild1")
             os.chdir("Autobuild1")
             autobuild_cl = python_run+' autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+str(coreNumber)+' -pdb result.pdb'
-            os.system(job_submitter+' -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
+            os.system(job_submitter+' -q '+computeQueue+core_selector+coreNumber+' -o %J.log '+autobuild_cl)
             os.chdir(original_path)
             half_finished = True
 
@@ -361,7 +363,7 @@ while percent97_finished == False:
                 os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory2+"result.pdb Autobuild2")
                 os.chdir("Autobuild2")
                 autobuild_cl = python_run+' autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+coreNumber+' -pdb result.pdb'
-                os.system(job_submitter+' -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
+                os.system(job_submitter+' -q '+computeQueue+core_selector+coreNumber+' -o %J.log '+autobuild_cl)
                 os.chdir(original_path)
                 percent97_finished = True
 

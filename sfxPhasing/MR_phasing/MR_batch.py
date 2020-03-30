@@ -26,6 +26,7 @@ parser.add_argument("-q", "--queue", help = "input the computing queue you want 
 parser.add_argument("-n", "--number-of-cores", help = "input the number of core you want to use", type = str)
 parser.add_argument("-res","--resolution_range", nargs = '+', help='input the range of the resolution range (optional)',type = str)
 parser.add_argument("-rmsd","--rmsd_range", nargs = '+', help='input the range of the rmsd range. Default: 0.5 2.0 (optional)',type = str)
+parser.add_argument("-Host","--host", help = 'must enter a host name, either type lcls or cori ',type = str)
 
 
 args = parser.parse_args()
@@ -70,6 +71,18 @@ if args.rmsd_range:
 else:
     rmsd_low = str(0.5)
     rmsd_high = str(2.0)
+    
+if args.host == 'lcls':
+    job_submitter = 'bsub'
+    python_run = 'python'
+    core_selector = ' -n '
+elif args.host == 'cori':
+    job_submitter = 'srun -A m3506 -C haswell'
+    python_run = 'python2.7'
+    core_selector = ' --cores-per-socket '
+else:
+    print ('You have to enter the host: either lcls or cori')
+    sys.exit()
 
 ##Creating the user-defined range if any
 def get_range(x,y):
@@ -114,6 +127,7 @@ for line in split_out:
 if args.resolution_range:
     resolution_range = get_range(round(float(args.resolution_range[0]),1),round(float(args.resolution_range[1]),1))
 else:
+    resolution_range = []
     for i in np.arange(resolution, resolution+1.5, 0.1):
         resolution_range.append(round(i,1))
 
@@ -189,7 +203,7 @@ if component_num == 1:
                 os.system('mkdir -p '+directory)
                 os.system('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[0]+' '+seq_list[0]+' '+'FILE_SETUP.json'+' '+directory)
                 os.chdir("./"+directory)
-                os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log python MR_pip.py -rfl '+rfl_file+' -pdbE1 '+pdb_list[0]+' -seq1 '+seq_list[0]+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
+                os.system(job_submitter+' -q '+computeQueue+core_selector+coreNumber+' -o %J.log '+python_run+' MR_pip.py -rfl '+rfl_file+' -pdbE1 '+pdb_list[0]+' -seq1 '+seq_list[0]+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
                 os.chdir("../../..")
 
     
@@ -228,5 +242,5 @@ elif component_num > 1:
                 f = open("output.txt", "a")
 
                 #print(cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels)
-                os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log python MR_pip.py -rfl '+rfl_file+' '+cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
+                os.system(job_submitter+' -q '+computeQueue+core_selector+coreNumber+' -o %J.log '+python_run+' MR_pip.py -rfl '+rfl_file+' '+cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
                 os.chdir("../../..")
