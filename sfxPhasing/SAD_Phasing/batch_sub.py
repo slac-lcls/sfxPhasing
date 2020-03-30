@@ -33,6 +33,7 @@ parser.add_argument("-RESOL_R","--resolution-range", nargs = '+', help='input th
 parser.add_argument("-THRE_R","--threshold-range", nargs = '+', help='input the range of the threshold range (optional)',type = str)
 parser.add_argument("-ATOM_R","--atom-range", nargs = '+', help='input the range of the atom number range (optional)',type = str)
 parser.add_argument("-AutoBuild","--AutoBuild-polish", help = 'type N if you do not want it and type Y if you like it',type = str)
+parser.add_argument("-Host","--host", help = 'must enter a host name, either type lcls or cori ',type = str)
 
 args = parser.parse_args()
 
@@ -66,6 +67,16 @@ if args.number_of_cores:
     coreNumber = args.number_of_cores
 else:
     print ('Please address the core number you want to use')
+    sys.exit()
+    
+if args.host == 'lcls':
+    job_submitter = 'bsub'
+    python_run = 'python'
+elif args.host == 'cori':
+    job_submitter = 'srun'
+    python_run = 'python2.7'
+else:
+    print ('You have to enter the host: either lcls or cori')
     sys.exit()
 ###################### Setup the Grid Range #########################
 
@@ -208,7 +219,7 @@ if max_DSUL > 0 and atomType == 'S':
                     directory = 'DSUL'+str(dsul)+'/threshold'+str(thre)+'/resolution'+str(resolution)+'/atom_number'+str(number)
                     directory_list.append(directory)
 
-                    automation_cl = 'python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.3 -thre '+str(thre)+' -DSUL '+str(dsul)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -lresl '+low_resolution_cut+' -P '+original_path
+                    automation_cl = python_run+' Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.3 -thre '+str(thre)+' -DSUL '+str(dsul)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -lresl '+low_resolution_cut+' -P '+original_path+' -Host '+args.host
                     command_list.append(automation_cl)
 
 
@@ -222,7 +233,7 @@ elif max_DSUL == 0 or atomType != 'S':
                 directory_list.append(directory)
 
 
-                automation_cl = 'python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.5 -thre '+str(thre)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -P '+original_path
+                automation_cl = python_run+' Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.5 -thre '+str(thre)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -P '+original_path+' -Host '+args.host
                 command_list.append(automation_cl)
 
 # Shuffle the jobs
@@ -237,7 +248,7 @@ for i in range(len(directory_list)):
     os.system('mkdir -p '+directory_list[i])
     os.system('cp Se_SAD_automation.py SHELX_script.py crank2_script.py autobuild.py '+sequenceFile+' '+reflectionFile+' '+directory_list[i])  
     os.chdir("./"+directory_list[i])
-    os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+command_list[i])
+    os.system(job_submitter+' -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+command_list[i])
     os.chdir(original_path)    
     
     
@@ -323,14 +334,14 @@ while half_finished == False:
     if job_count() < max(1,Half_total_jobs):
         pass
     else:
-	
+
         selected_job_directory1 = case_select()
         if args.AutoBuild_polish != 'N':
             os.system("mkdir Autobuild1")
             os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory1+"result.pdb Autobuild1")
             os.chdir("Autobuild1")
-            autobuild_cl = 'python autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+str(coreNumber)+' -pdb result.pdb'
-            os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
+            autobuild_cl = python_run+' autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+str(coreNumber)+' -pdb result.pdb'
+            os.system(job_submitter+' -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
             os.chdir(original_path)
             half_finished = True
 
@@ -349,8 +360,8 @@ while percent97_finished == False:
                 os.system("mkdir Autobuild2")
                 os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory2+"result.pdb Autobuild2")
                 os.chdir("Autobuild2")
-                autobuild_cl = 'python autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+coreNumber+' -pdb result.pdb'
-                os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
+                autobuild_cl = python_run+' autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+coreNumber+' -pdb result.pdb'
+                os.system(job_submitter+' -q '+computeQueue+' -n '+coreNumber+' -o %J.log '+autobuild_cl)
                 os.chdir(original_path)
                 percent97_finished = True
 

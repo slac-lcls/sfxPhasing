@@ -35,6 +35,8 @@ parser.add_argument("-MIND1","--mind-atom", default = '-3.5', help = "input mini
 parser.add_argument("-MIND2","--mind-symm", default = '2.2',help = "input minimum distance between symmetry", type = str)
 parser.add_argument("-lresl","--low-resolution-cut",default = '999', help = "input low resolution cutoff",type = str)
 parser.add_argument("-P", "--path", help = "input the orginal path", type = str)
+parser.add_argument("-Host","--host", help = 'must enter a host name, either type lcls or cori ',type = str)
+
 args = parser.parse_args()
 
 if args.reflection_mtz:
@@ -67,8 +69,18 @@ if args.atom_type:
 if args.esel:
     eSel = args.esel
     
+if args.host == 'lcls':
+    #job_submitter = 'bsub'
+    python_run = 'python'
+elif args.host == 'cori':
+    #job_submitter = 'srun'
+    python_run = 'python2.7'
+else:
+    print ('You have to enter the host: either lcls or cori')
+    sys.exit()
     
-shelx_CD = 'python SHELX_script.py  -rfl '+reflectionFile+' -MIND1 '+args.mind_atom+' -MIND2 '+args.mind_symm+' -resl '+str(resolution)+' -lresl '+args.low_resolution_cut+' -TEST 0 99 -ESEL '+eSel+' -SFAC '+atomType+' -NTRY 5000 -FIND '+str(atom_find)+' -DSUL '+str(dsul)+' -thre '+args.threshold
+    
+shelx_CD = python_run+' SHELX_script.py  -rfl '+reflectionFile+' -MIND1 '+args.mind_atom+' -MIND2 '+args.mind_symm+' -resl '+str(resolution)+' -lresl '+args.low_resolution_cut+' -TEST 0 99 -ESEL '+eSel+' -SFAC '+atomType+' -NTRY 5000 -FIND '+str(atom_find)+' -DSUL '+str(dsul)+' -thre '+args.threshold
 
 os.system(shelx_CD)
 
@@ -89,7 +101,7 @@ else:
     sys.exit()
 
 # run crank2
-crank2_cl = 'python crank2_script.py -rfl '+reflectionFile+' -pdb '+new_pdb+' -seq '+sequenceFile+' -atype '+atomType+' -P '+args.path
+crank2_cl = python_run+' crank2_script.py -rfl '+reflectionFile+' -pdb '+new_pdb+' -seq '+sequenceFile+' -atype '+atomType+' -P '+args.path+' -Host '+args.host
 os.system(crank2_cl)
 
 # check whether crank2 works

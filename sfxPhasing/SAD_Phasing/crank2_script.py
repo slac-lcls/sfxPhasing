@@ -20,6 +20,7 @@ parser.add_argument("-pdb","--pdb-file",help="input the pdb file",type = str)
 parser.add_argument("-seq","--sequence-file",help="input the sequence file",type = str)
 parser.add_argument("-atype", "--atom-type", help="input the atom type", type = str)
 parser.add_argument("-P", "--path", help = "input the orginal path", type = str)
+parser.add_argument("-Host","--host", help = 'must enter a host name, either type lcls or cori ',type = str)
 args = parser.parse_args()
 
 if args.reflection_mtz:
@@ -120,7 +121,16 @@ for i in crank_inp_file:
 #############################################################################################################
 
 #################################### Run Crank2 ###############################################################
-command = 'python /reg/common/package/ccp4/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
+
+if args.host == 'lcls':
+    command = 'python /reg/common/package/ccp4/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
+elif args.host == 'cori':
+    command = 'python2.7 /project/projectdirs/m3506/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
+else:
+    print ('You have to enter the host for Crank2: either lcls or cori at this stage')
+    sys.exit()
+    
+
 
 process = subprocess.Popen(command, 
                           stdout=subprocess.PIPE,

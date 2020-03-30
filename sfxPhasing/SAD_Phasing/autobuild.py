@@ -19,7 +19,6 @@ parser.add_argument("-rfff", "--r-free-flag-fraction-parameter", default = 0.1, 
 parser.add_argument("-nproc", "--number-of-processors", default = 1, help='enter the number of processors', type = int)
 parser.add_argument("-pdb", "--model-pdb", default = "None", help='enter the pdb file', type = str)
 
-
 args = parser.parse_args()
 
 if args.model_pdb:
@@ -40,7 +39,7 @@ if args.r_free_flag_fraction_parameter:
 
 if args.number_of_processors:
     numberOfProcessors = args.number_of_processors
-
+    
 os.system('phenix.autobuild --show_defaults > my_autobuild.eff')
 
 list = []
