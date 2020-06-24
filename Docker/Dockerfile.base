@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 LABEL maintainer="Anna Giannakou <agiannakou@lbl.gov>"
-
+#adapted from Johannes Blaschke <jpblaschke@lbl.gov>
 # Base Ubuntu packages
 
 ENV DEBIAN_FRONTEND noninteractive
