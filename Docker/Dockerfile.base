@@ -1,0 +1,86 @@
+FROM ubuntu:18.04
+LABEL maintainer="Anna Giannakou <agiannakou@lbl.gov>"
+
+# Base Ubuntu packages
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV LANG C.UTF-8
+ARG nersc_user
+RUN \
+    apt-get update          &&                                                 \
+    apt-get --yes upgrade   &&                                                 \
+    apt-get --yes install                                                      \
+        bzip2                                                                  \
+        curl                                                                   \
+        git                                                                    \
+        libffi-dev                                                             \
+        lsb-release                                                            \
+        tzdata                                                                 \
+        vim                                                                    \
+        wget                                                                   \
+        bash                                                                   \
+        autoconf                                                               \
+        automake                                                               \
+        gcc                                                                    \
+        g++                                                                    \
+        make                                                                   \
+        gfortran                                                               \
+        tar								       \
+	csh								       \
+	libfontconfig1 							       \
+	libxrender1							       \
+	python
+
+# Timezone to Berkeley
+
+ENV TZ=America/Los_Angeles
+RUN \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime  &&  \
+    echo $TZ > /etc/timezone
+
+# Phenix
+RUN mkdir -p /img/phenix
+COPY phenix-installer-1.18.2-3874-intel-linux-2.6-x86_64-centos6.tar /img/phenix
+RUN cd /img/phenix/ && \
+    ls && \
+    tar -xvf phenix-installer-1.18.2-3874-intel-linux-2.6-x86_64-centos6.tar && \
+    cd phenix-installer-1.18.2-3874-intel-linux-2.6-x86_64-centos6 && \
+    ./install --prefix=/img/phenix/  		&&\
+    cd /img/phenix/					&&\
+    rm -rf phenix-installer-1.18.2-3874-intel-linux-2.6-x86_64-centos6.tar 
+
+# ccp4
+RUN mkdir -p /img/ccp4
+COPY ccp4-7.0.078-shelx-arpwarp-linux64.tar /img/ccp4
+RUN cd /img/ccp4 && \
+    tar -xvf ccp4-7.0.078-shelx-arpwarp-linux64.tar && \
+    cd ccp4-7.0 && \
+    ./BINARY.setup --run-from-script		    &&\
+    cd /img/ccp4					    && \
+    rm -rf ccp4-7.0.078-shelx-arpwarp-linux64.tar
+#conda
+RUN mkdir -p /img/static
+RUN mkdir /img/conda.local
+COPY conda.local /img/conda.local
+RUN cd /img/conda.local		&& \
+    . sites/default.sh 		&& \
+    export STATIC_DIR=../../static	&& \
+    ./install_conda.sh 			&& \
+    chmod +x env.sh 				&& \
+    chmod +x env.local			&&\
+    sync				&&\
+    ./env.sh
+
+#sfx
+
+RUN mkdir -p /sfx
+COPY sfxPhasing /sfx/sfxPhasing
+RUN cd /sfx/sfxPhasing/ && \
+    bash -c "source /img/conda.local/env.sh && conda create --name sfx --file requirements.txt"
+RUN mkdir -p /img/tmp/$nersc_user
+RUN  sed -i 's|/tmp/|/img/tmp/|g' img/ccp4/ccp4-7.0/bin/ccp4.setup-sh
+
+ADD load_everything.sh /img
+WORKDIR /img
+RUN chmod +x load_everything.sh 
+#ENTRYPOINT ["./load_everything.sh"] 
