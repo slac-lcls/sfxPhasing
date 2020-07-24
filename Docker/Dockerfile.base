@@ -75,11 +75,12 @@ RUN cd /img/conda.local		&& \
 
 RUN mkdir -p /sfx
 COPY sfxPhasing /sfx/sfxPhasing
+
 RUN cd /sfx/sfxPhasing/ && \
     bash -c "source /img/conda.local/env.sh && conda create --name sfx --file requirements.txt"
 RUN mkdir -p /img/tmp/$nersc_user
 RUN  sed -i 's|/tmp/|/img/tmp/|g' img/ccp4/ccp4-7.0/bin/ccp4.setup-sh
-
+RUN  sed -i 's|/project/projectdirs/m3506/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py|/img/ccp4/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py|g' /sfx/sfxPhasing/sfxPhasing/SAD_Phasing/crank2_script.py
 ADD load_everything.sh /img
 WORKDIR /img
 RUN chmod +x load_everything.sh 

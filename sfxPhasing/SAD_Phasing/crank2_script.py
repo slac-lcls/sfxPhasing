@@ -124,15 +124,20 @@ for i in crank_inp_file:
 #################################### Run Crank2 ###############################################################
 #command = 'python /reg/common/package/ccp4/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
 #command = 'python /project/projectdirs/m3506/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
-command = 'python /project/projectdirs/m3506/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
+ccp4_path = os.getenv('CCP4')
+print(ccp4_path)
+command = 'python '+ccp4_path+'/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
+print(command)
+#command = 'python /project/projectdirs/m3506/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
+#command = 'python /img/ccp4/ccp4-7.0/share/ccp4i2/pipelines/crank2/crank2/crank2.py --keyin crank2.inp --hklout result.mtz --xyzout result.pdb'
 f = open('crank2.log','w')
 process = subprocess.Popen(command, 
                           stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,shell=True)
 
 out,err = process.communicate()
-f.write(out)
-f.write(err)
+f.write(out.decode('utf-8'))
+f.write(err.decode('utf-8'))
 #print(out)
 #print(err)
 split_out=out.splitlines()
@@ -147,14 +152,14 @@ R_free_list=[]
 residue_report = []
 Succeed = False
 for line in split_out:
-    if 'Majority of model was successfully built!' in line:
+    if b'Majority of model was successfully built!' in line:
         Succeed = True
         for i in split_out:
-            if 'R factor after refinement is ' in i:
+            if b'R factor after refinement is ' in i:
                 R_list.append(i.split(' is ')[-1])
-            elif 'R-free factor after refinement is ' in i:
+            elif b'R-free factor after refinement is ' in i:
                 R_free_list.append(i.split(' is ')[-1])
-            elif ' fragments built.' in i:
+            elif b' fragments built.' in i:
                 residue_report.append(i)
         break
 
