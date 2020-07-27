@@ -34,9 +34,10 @@ conda env list
 see [autosfx-dependencies](https://github.com/slaclab/autosfx-dependencies)
 
 ## Usage
+Noting `SFX_PHASING_PATH` and `SFX_DEPS_PATH` the absolute paths to `sfxPhasing` and `autosfx-dependencies` directories, load the environment as follows:
 ```bash
-source /.../sfxPhasing/Docker/conda.local/env.local
+source $SFX_PHASING_PATH/Docker/conda.local/env.local
 source activate sfx
-source /.../ccp4-7.1/bin/ccp4.setup-sh
-source /.../source /global/cfs/cdirs/lcls/fpoitevi/Software/autosfx-dependencies/phenix-installer-1.18.2-3874-intel-linux-2.6-x86_64-centos6/phenix-1.18.2-3874/phenix_env.sh
+source $SFX_DEPS_PATH/ccp4-7.1/bin/ccp4.setup-sh
+source $SFX_DEPS_PATH/phenix-installer-1.18.2-3874-intel-linux-2.6-x86_64-centos6/phenix-1.18.2-3874/phenix_env.sh
 ```
