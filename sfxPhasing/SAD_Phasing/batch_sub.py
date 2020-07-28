@@ -35,7 +35,7 @@ parser.add_argument("-RESOL_R","--resolution-range", nargs = '+', help='input th
 parser.add_argument("-THRE_R","--threshold-range", nargs = '+', help='input the range of the threshold range (optional)',type = str)
 parser.add_argument("-ATOM_R","--atom-range", nargs = '+', help='input the range of the atom number range (optional)',type = str)
 parser.add_argument("-AutoBuild","--AutoBuild-polish", help = 'type N if you do not want it and type Y if you like it',type = str)
-
+parser.add_argument("-shf", "--shifter", help = 'set this if you want to use shifter', type = str)
 args = parser.parse_args()
 #pr = cProfile.Profile()
 #pr.enable()
@@ -73,6 +73,13 @@ if args.number_of_cores:
 else:
     print ('Please address the core number you want to use')
     sys.exit()
+
+if args.shifter:
+    print('You have chosen to use shifter to run Se_SAD part')
+    command_prefix = 'srun -N 1 shifter /img/load_everything.sh'
+else:
+    print('You have chosen to run using a conda env')
+    command_prefix = 'srun -N 1'
 ###################### Setup the Grid Range #########################
 
 print("This program utilize two softwares, CCP4i2 SHELXC/D and Crank2. Further refinement can be done by initiating Autobuild")
@@ -131,7 +138,9 @@ else :
     max_SE = single_S_or_SE_number
 
 #######################################################
-process = subprocess.Popen('phenix.mtz.dump '+reflectionFile, 
+########calling shifter for phenix this step is executed only once at the beginning of the workflow
+
+process = subprocess.Popen(command_prefix + ' phenix.mtz.dump '+reflectionFile, 
                           stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,shell=True)
 
@@ -218,11 +227,6 @@ if max_DSUL > 0 and atomType == 'S':
                 for number in atom_find:
                     directory = 'DSUL'+str(dsul)+'/threshold'+str(thre)+'/resolution'+str(resolution)+'/atom_number'+str(number)
                     directory_list.append(directory)
-                    #se_SAD = os.path.abspath(os.getcwd()+'/Se_SAD_automation.py')
-                    #crank = os.path.abspath(os.getcwd()+'/crank2_script.py')
-                    #shelx = os.path.abspath(os.getcwd()+'/SHELX_script.py')
-                    #print(se_SAD)
-                    #print(crank)
                     automation_cl = 'python '+se_SAD+' -shelx '+shelx+ ' -crank '+crank+' -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.5 -thre '+str(thre)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -P '+original_path
                     #automation_cl = 'python ' +se_SAD+ '-crank '+crank+' -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.3 -thre '+str(thre)+' -DSUL '+str(dsul)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -lresl '+low_resolution_cut+' -P '+original_path
                     #automation_cl = 'strace -tt -f -etrace=file,read,write,close,lseek,ioctl -o out.log python Se_SAD_automation.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -resl '+str(resolution)+' -FIND '+str(number)+' -ESEL 1.3 -thre '+str(thre)+' -DSUL '+str(dsul)+' -SFAC '+atomType+' -MIND1 '+mind_atom+' -MIND2 '+mind_symm+' -lresl '+low_resolution_cut+' -P '+original_path
@@ -253,12 +257,12 @@ directory_list,command_list = zip(*matching)
 
 # run jobs
 start_time_cp = datetime.datetime.now()
-for i in range(5):
+for i in range(5):     #set to 5 for testing/debug purposes
 #for i in range(len(directory_list)):
-    print('Hello')
     print(len(directory_list))
     start_time = datetime.datetime.now()
     os.system('mkdir -p '+directory_list[i])
+    # removing redundant copy operations
     #os.system('cp Se_SAD_automation.py SHELX_script.py crank2_script.py autobuild.py '+sequenceFile+' '+reflectionFile+' '+directory_list[i])  
     #os.system('cp Se_SAD_automation.py SHELX_script.py crank2_script.py autobuild.py '+directory_list[i])  
     end_time = datetime.datetime.now()
@@ -267,23 +271,30 @@ for i in range(5):
     print(str(float(delta.seconds) + float(delta.microseconds) / 1000000))
     os.chdir("./"+directory_list[i])
     print(os.getcwd())
+    ##this will block replacing with Popen
     #os.system('srun -A m3506 -C haswell -q '+computeQueue+' --cores-per-socket '+coreNumber+' -o %J.log '+command_list[i])
     print(command_list[i])
-    process = subprocess.Popen('srun -C haswell -q '+computeQueue+' --nodes 1'+' -o %J.log '+command_list[i], stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
     f = open('output.log', 'w') 
     #process = subprocess.Popen(command_list[i], stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell= True)
     #process = subprocess.Popen('srun --cores-per-socket '+coreNumber+' -o %J.log '+command_list[i], stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+    ########run shifter with affinity settings
+    process = subprocess.Popen('export OMP_NUM_PROCESS=32; export OMP_PROC_BIND=spread; srun -n 1 -o %J.log shifter /img/load_everything.sh '+command_list[i], stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+    #d = dict(os.environ)
+    #d['OMP_NUM_PROCESS'] = '32'
+    #d['OMP_PROC_BIND'] = 'spread'
+    #process = subprocess.Popen('srun -n 1 -o %J.log shifter /img/load_everything.sh '+command_list[i],env = d, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
     print('Job submitted')
-    #out,err = process.communicate()
+    ## only uncomment this for debug otherwise job submission will block
+    out,err = process.communicate()
     #print(out)
     #process
-    #print(err)
+    print(err)
     os.chdir(original_path)    
 end_time_cp = datetime.datetime.now()
 delta = end_time_cp - start_time_cp
+# this is for measurement only 
 with open('times500_2_jobs_optimization.log', 'w') as f:
     f.write('Total time for copy operation:' + str(float(delta.seconds) + float(delta.microseconds) / 1000000)+'\n')
-#exit(0)    
 #################### Wait for to start Autobuild to polish the model ###########################
 ##helper method
 
@@ -316,7 +327,7 @@ def case_select ():
     polish_cases_0 = []
     for i in polish_cases_Rfree:
         polish_cases_0.append(results[i])
-
+    print(polish_cases_0)
     Residue_score = []
     for i in polish_cases_0:
         Residue_score.append(int(i.split('Residue:')[-1]))
@@ -354,7 +365,8 @@ def case_select ():
     print ("It has the score R:"+select_case.split('R:')[-1])
     return select_case.split('R:')[0]
 
-Total_jobs = 3
+###set to 5 for testing/debug
+Total_jobs = 5
 #Total_jobs = len(directory_list)
 Half_total_jobs = Total_jobs // 2
 percent97_total_jobs = Total_jobs * 97 //100
@@ -374,7 +386,8 @@ while half_finished == False:
             os.system("cp autobuild.py "+sequenceFile+" "+reflectionFile+" "+selected_job_directory1+"result.pdb Autobuild1")
             os.chdir("Autobuild1")
             autobuild_cl = 'python autobuild.py -rfl '+reflectionFile+' -seq '+sequenceFile+' -rfff 0.05 -nproc '+str(coreNumber)+' -pdb result.pdb'
-            os.system('srun -A m3506  -C haswell -q '+computeQueue+' --cores-per-socket= '+coreNumber+' -o %J.log '+autobuild_cl)
+            ### this will block changing it with Popen
+            #os.system('srun -A m3506  -C haswell -q '+computeQueue+' --cores-per-socket= '+coreNumber+' -o %J.log '+autobuild_cl)
             os.chdir(original_path)
             half_finished = True
 
