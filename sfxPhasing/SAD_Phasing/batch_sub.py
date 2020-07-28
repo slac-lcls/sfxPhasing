@@ -278,7 +278,7 @@ for i in range(5):     #set to 5 for testing/debug purposes
     #process = subprocess.Popen(command_list[i], stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell= True)
     #process = subprocess.Popen('srun --cores-per-socket '+coreNumber+' -o %J.log '+command_list[i], stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
     ########run shifter with affinity settings
-    process = subprocess.Popen('export OMP_NUM_PROCESS=32; export OMP_PROC_BIND=spread; srun -n 1 -o %J.log shifter /img/load_everything.sh '+command_list[i], stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+    process = subprocess.Popen('export OMP_NUM_PROCESS=32; export OMP_PROC_BIND=spread; srun -N 1 -o %J.log shifter /img/load_everything.sh '+command_list[i], stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
     #d = dict(os.environ)
     #d['OMP_NUM_PROCESS'] = '32'
     #d['OMP_PROC_BIND'] = 'spread'
