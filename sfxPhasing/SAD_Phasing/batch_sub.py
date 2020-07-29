@@ -7,6 +7,7 @@ from __future__ import print_function
 import sys
 import subprocess
 import os
+import time
 import datetime
 import argparse
 import re
@@ -76,10 +77,10 @@ else:
 
 if args.shifter:
     print('You have chosen to use shifter to run Se_SAD part')
-    command_prefix = 'srun -N 1 shifter /img/load_everything.sh'
+    command_prefix = 'srun -n 1 shifter /img/load_everything.sh'
 else:
     print('You have chosen to run using a conda env')
-    command_prefix = 'srun -N 1'
+    command_prefix = 'srun -n 1'
 ###################### Setup the Grid Range #########################
 
 print("This program utilize two softwares, CCP4i2 SHELXC/D and Crank2. Further refinement can be done by initiating Autobuild")
@@ -278,17 +279,19 @@ for i in range(5):     #set to 5 for testing/debug purposes
     #process = subprocess.Popen(command_list[i], stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell= True)
     #process = subprocess.Popen('srun --cores-per-socket '+coreNumber+' -o %J.log '+command_list[i], stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
     ########run shifter with affinity settings
-    process = subprocess.Popen('export OMP_NUM_PROCESS=32; export OMP_PROC_BIND=spread; srun -N 1 -o %J.log shifter /img/load_everything.sh '+command_list[i], stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+    process = subprocess.Popen('srun -n 1 --cpus-per-task='+coreNumber+' -o %J.log shifter /img/load_everything.sh '+command_list[i] , stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+    time.sleep (5)
     #d = dict(os.environ)
     #d['OMP_NUM_PROCESS'] = '32'
     #d['OMP_PROC_BIND'] = 'spread'
     #process = subprocess.Popen('srun -n 1 -o %J.log shifter /img/load_everything.sh '+command_list[i],env = d, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
     print('Job submitted')
+
     ## only uncomment this for debug otherwise job submission will block
-    out,err = process.communicate()
+    #out,err = process.communicate()
     #print(out)
     #process
-    print(err)
+    #print(err)
     os.chdir(original_path)    
 end_time_cp = datetime.datetime.now()
 delta = end_time_cp - start_time_cp
