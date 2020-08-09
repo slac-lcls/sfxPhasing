@@ -27,8 +27,10 @@ parser.add_argument("-n", "--number-of-cores", help = "input the number of core 
 parser.add_argument("-res","--resolution_range", nargs = '+', help='input the range of the resolution range (optional)',type = str)
 parser.add_argument("-rmsd","--rmsd_range", nargs = '+', help='input the range of the rmsd range. Default: 0.5 2.0 (optional)',type = str)
 parser.add_argument("-shf", "--shifter", help = 'set this if you want to use shifter', type = str)
+parser.add_argument("-d", "--debug", help = 'set this if you want to run in debug mode and wait for each job to finish before submitting the next one', type = str)
 
 args = parser.parse_args()
+debug = False
 
 if args.reflection_mtz:
     rfl_file = args.reflection_mtz
@@ -77,6 +79,10 @@ if args.shifter:
 else:
     print('You have chosen to run using a conda env')
     command_prefix = 'srun -n 1'
+
+if args.debug:
+    print('You have chosen to run in debug mode and wait for each job to finish before starting the next one')
+    debug = True
 
 ##Creating the user-defined range if any
 def get_range(x,y):
@@ -208,9 +214,10 @@ if component_num == 1:
 
                 process = subprocess.Popen('srun -n 1 --mem=5000 --gres=craynetwork:0 --cpus-per-task='+coreNumber+' -o %J.log shifter /img/load_everything.sh python MR_pip.py -rfl '+rfl_file+' -pdbE1 '+pdb_list[0]+' -seq1 '+seq_list[0]+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path , stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
                 #comment these lines out if you want parallel job execution
-                out, err = process.communicate()
-                print(out)
-                print(err)
+                if debug == True:
+                    out, err = process.communicate()
+                    print(out)
+                    print(err)
                 #os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log python MR_pip.py -rfl '+rfl_file+' -pdbE1 '+pdb_list[0]+' -seq1 '+seq_list[0]+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
                 os.chdir("../../..")
 
@@ -257,8 +264,10 @@ elif component_num > 1:
                 print(cl)
                 process = Popen('srun -n 1 --mem=5000 --gres=craynetwork:0 --cpus-per-task='+coreNumber+ '-o %J.log shifter /img/load_everything.sh python MR_pip.py -rfl ' +rfl_file+' '+cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path)
                 #comment these lines out if you want parallel job execution
-                out,err = process.communicate()
-                print(out)
-                print(err)
+                if debug == True:
+                    out,err = process.communicate()
+                    print(out)
+                    print(err)
+
                 #os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log python MR_pip.py -rfl '+rfl_file+' '+cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
                 os.chdir("../../..")
