@@ -252,7 +252,7 @@ elif component_num > 1:
                 cl = ''
                 for t in range(1,component_num+1):
                     #os.system('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[t-1]+' '+seq_list[t-1]+' '+'FILE_SETUP.json '+' '+directory)
-                    process = subprocess.Popen('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[t-1]+' '+seq_list[t-1]+' '+'FILE_SETUP.json '+' '+directory)
+                    process = subprocess.Popen('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[t-1]+' '+seq_list[t-1]+' '+'FILE_SETUP.json '+' '+directory, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell= True)
 		    out,err = process.communicate()
 		    print(out)
 		    print(err)
