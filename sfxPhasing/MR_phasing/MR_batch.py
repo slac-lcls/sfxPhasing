@@ -3,6 +3,7 @@ import sys
 import shutil
 import subprocess
 import os
+import time
 import argparse
 import re
 import numpy as np
@@ -218,6 +219,7 @@ if component_num == 1:
                     out, err = process.communicate()
                     print(out)
                     print(err)
+                time.sleep(2)
                 #os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log python MR_pip.py -rfl '+rfl_file+' -pdbE1 '+pdb_list[0]+' -seq1 '+seq_list[0]+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
                 os.chdir("../../..")
 
