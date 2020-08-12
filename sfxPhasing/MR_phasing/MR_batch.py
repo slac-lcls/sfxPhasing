@@ -253,11 +253,6 @@ elif component_num > 1:
                 for t in range(1,component_num+1):
                     #os.system('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[t-1]+' '+seq_list[t-1]+' '+'FILE_SETUP.json '+' '+directory)
                     process = subprocess.Popen('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[t-1]+' '+seq_list[t-1]+' '+'FILE_SETUP.json '+' '+directory)
-		    if debug == True:
-                    	out,err = process.communicate()
-                    	print(out)
-                    	print(err)
-		    time.sleep(2)
                     cl += '-pdbE'+str(t)+' '+pdb_list[t-1]+' '+'-seq'+str(t)+ \
                     ' '+seq_list[t-1]+' '+'-idenE'+str(t)+' '+str(rmsd_permutation[j][t-1])+ \
                     ' '+'-errtE'+str(t)+' rmsd '  
