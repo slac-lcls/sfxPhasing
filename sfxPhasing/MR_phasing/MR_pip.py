@@ -346,13 +346,18 @@ for i in my_temp:
 
 
 ####################################### DEPLOY PHENIX COMMAND LINE#############################################
-process = subprocess.Popen(' phaser.MRage --verbosity=VERBOSE output.eff', 
+try:
+    process = subprocess.Popen(' phaser.MRage --verbosity=VERBOSE output.eff', 
                          stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE,shell=True)
 
+    print('Launched phaser')
 #os.system('phaser.MRage --verbosity=VERBOSE output.eff')
 #redirecting phaser output to file 
-out,err = process.communicate()
+    out,err = process.communicate()
+except:
+    print('phaser didnt work, I will exit gracefully')
+    sys.exit(0)
 print(out)
 print(err)
 split_out=out.splitlines()
@@ -380,7 +385,7 @@ try:
     print(resultTitle_index)
 except:
     print ('The case is not successful')
-
+    sys.exit(0)
 for line in mylog:
     if 'P(total)=' in line:
         print(line)
