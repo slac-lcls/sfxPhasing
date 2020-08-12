@@ -209,8 +209,16 @@ if component_num == 1:
         for j in rmsd_range:
             for k in resolution_range:
                 directory = 'Request_'+str(i)+'_copy/rmsd'+str(j)+'/resolution'+str(k)
-                os.system('mkdir -p '+directory)
-                os.system('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[0]+' '+seq_list[0]+' '+'FILE_SETUP.json'+' '+directory)
+                process = subprocess.Popen('mkdir -p '+ directory, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+                out,err = process.communicate()
+                print(out)
+                print(err)
+                #os.system('mkdir -p '+directory)
+                #os.system('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[0]+' '+seq_list[0]+' '+'FILE_SETUP.json'+' '+directory)
+                process2 = subprocess.Popen('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[0]+' '+seq_list[0]+' '+'FILE_SETUP.json'+' '+directory, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+                out, err = process2.communicate()
+                print(out)
+                print(err)
                 os.chdir("./"+directory)
 
                 process = subprocess.Popen('srun -n 1 --mem=5000 --gres=craynetwork:0 --cpus-per-task='+coreNumber+' -o %J.log shifter /img/load_everything.sh python MR_pip.py -rfl '+rfl_file+' -pdbE1 '+pdb_list[0]+' -seq1 '+seq_list[0]+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path , stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
@@ -219,7 +227,7 @@ if component_num == 1:
                     out, err = process.communicate()
                     print(out)
                     print(err)
-                time.sleep(2)
+                time.sleep(5)
                 #os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log python MR_pip.py -rfl '+rfl_file+' -pdbE1 '+pdb_list[0]+' -seq1 '+seq_list[0]+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
                 os.chdir("../../..")
 
@@ -252,10 +260,10 @@ elif component_num > 1:
                 cl = ''
                 for t in range(1,component_num+1):
                     #os.system('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[t-1]+' '+seq_list[t-1]+' '+'FILE_SETUP.json '+' '+directory)
-                    process = subprocess.Popen('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[t-1]+' '+seq_list[t-1]+' '+'FILE_SETUP.json '+' '+directory, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell= True)
-		    out,err = process.communicate()
-		    print(out)
-		    print(err)
+                    process = subprocess.Popen('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[t-1]+' '+seq_list[t-1]+' '+'FILE_SETUP.json '+' '+directory)
+                    out,err = process.communicate()
+                    print(out)
+                    print(err)
                     cl += '-pdbE'+str(t)+' '+pdb_list[t-1]+' '+'-seq'+str(t)+ \
                     ' '+seq_list[t-1]+' '+'-idenE'+str(t)+' '+str(rmsd_permutation[j][t-1])+ \
                     ' '+'-errtE'+str(t)+' rmsd '  
@@ -270,6 +278,6 @@ elif component_num > 1:
                     out,err = process.communicate()
                     print(out)
                     print(err)
-		time.sleep(2)
+
                 #os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log python MR_pip.py -rfl '+rfl_file+' '+cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
                 os.chdir("../../..")
