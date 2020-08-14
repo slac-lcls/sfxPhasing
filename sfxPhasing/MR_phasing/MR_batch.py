@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import os
 import time
+import datetime
 import argparse
 import re
 import numpy as np
@@ -34,13 +35,16 @@ args = parser.parse_args()
 debug = False
 
 if args.reflection_mtz:
-    rfl_file = args.reflection_mtz
+    rfl_file = os.path.abspath(args.reflection_mtz)
 else:
     print('The reflection file is missing')
     sys.exit()
 
 if args.pdb_file:
-     pdb_list= args.pdb_file
+    print(args.pdb_file)
+
+    pdb_list= args.pdb_file
+
 else:
     print('The pdb file is missing')
     sys.exit()
@@ -75,8 +79,8 @@ else:
     rmsd_high = str(2.0)
 
 if args.shifter:
-    print('You have chosen to use shifter to run Se_SAD part')
-    command_prefix = 'srun -n 1 shifter /img/load_everything.sh'
+    print('You have chosen to use shifter to run the phasing part')
+    command_prefix = 'srun -N 1 -n 1 shifter /img/load_everything.sh'
 else:
     print('You have chosen to run using a conda env')
     command_prefix = 'srun -n 1'
@@ -202,32 +206,45 @@ print ("copy list:"+str(total_request_copy_list))
 print ("rmsd range:"+str(rmsd_dict['rmsd1']))
 print ("Resolution range:"+str(resolution_range))
 ###################################################################################################
+
+MR_pip = os.path.abspath(os.getcwd()+'/MR_pip.py')
+pdb_list_input = os.path.abspath(pdb_list[0])
+seq_list_input = os.path.abspath(seq_list[0])
+
+process_list = []
 if component_num == 1:
     rmsd_range = rmsd_dict['rmsd1']
+
 #create each grid as a directory
+    #for i in total_request_copy_list:
+    print(len(total_request_copy_list[:1]))
+    print(total_request_copy_list[:1])
+    #for i in total_request_copy_list[:1]:
     for i in total_request_copy_list:
         for j in rmsd_range:
             for k in resolution_range:
                 directory = 'Request_'+str(i)+'_copy/rmsd'+str(j)+'/resolution'+str(k)
-                process = subprocess.Popen('mkdir -p '+ directory, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
-                out,err = process.communicate()
-                print(out)
-                print(err)
+                print(directory)
+                os.makedirs(directory, exist_ok = True)
+
                 #os.system('mkdir -p '+directory)
+                print(pdb_list_input)
+                print(os.path.abspath(pdb_list[0]))
+                print(seq_list_input)
+                print(os.path.abspath(seq_list[0]))
+                shutil.copy(os.getcwd()+'/FILE_SETUP.json', directory+'/FILE_SETUP.json')
                 #os.system('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[0]+' '+seq_list[0]+' '+'FILE_SETUP.json'+' '+directory)
-                process2 = subprocess.Popen('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[0]+' '+seq_list[0]+' '+'FILE_SETUP.json'+' '+directory, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
-                out, err = process2.communicate()
-                print(out)
-                print(err)
                 os.chdir("./"+directory)
 
-                process = subprocess.Popen('srun -n 1 --mem=5000 --gres=craynetwork:0 --cpus-per-task='+coreNumber+' -o %J.log shifter /img/load_everything.sh python MR_pip.py -rfl '+rfl_file+' -pdbE1 '+pdb_list[0]+' -seq1 '+seq_list[0]+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path , stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+                process = subprocess.Popen('srun -n 1 --mem=10000 --gres=craynetwork:0 --cpus-per-task='+coreNumber+' -o %J.log shifter /img/load_everything.sh python  '+MR_pip+ ' -rfl '+rfl_file+' -pdbE1 '+pdb_list_input+' -seq1 '+seq_list_input+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path , stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
                 #comment these lines out if you want parallel job execution
                 if debug == True:
                     out, err = process.communicate()
                     print(out)
                     print(err)
-                time.sleep(5)
+                process_list.append(process)
+                print('Submitted', datetime.datetime.now())
+                time.sleep(10)
                 #os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log python MR_pip.py -rfl '+rfl_file+' -pdbE1 '+pdb_list[0]+' -seq1 '+seq_list[0]+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
                 os.chdir("../../..")
 
@@ -255,29 +272,39 @@ elif component_num > 1:
                 print(resolution_range)
                 directory = 'Request_'+str(i)+'_copy/'+folder_list[j]+'/resolution'+str(k)
                 
-                os.system('mkdir -p '+directory)
+                os.makedirs(directory, exist_ok = True)
+                #os.system('mkdir -p '+directory)
                 
                 cl = ''
                 for t in range(1,component_num+1):
                     #os.system('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[t-1]+' '+seq_list[t-1]+' '+'FILE_SETUP.json '+' '+directory)
-                    process = subprocess.Popen('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[t-1]+' '+seq_list[t-1]+' '+'FILE_SETUP.json '+' '+directory)
-                    out,err = process.communicate()
-                    print(out)
-                    print(err)
-                    cl += '-pdbE'+str(t)+' '+pdb_list[t-1]+' '+'-seq'+str(t)+ \
-                    ' '+seq_list[t-1]+' '+'-idenE'+str(t)+' '+str(rmsd_permutation[j][t-1])+ \
+                    
+                    shutil.copy(os.getcwd()+'/FILE_SETUP.json', directory+'/FILE_SETUP.json')
+                    #process = subprocess.Popen('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[t-1]+' '+seq_list[t-1]+' '+'FILE_SETUP.json '+' '+directory)
+                    #out,err = process.communicate()
+                    #print(out)
+                    #print(err)
+                    cl += '-pdbE'+str(t)+' '+pdb_list_input[t-1]+' '+'-seq'+str(t)+ \
+                    ' '+seq_list_input[t-1]+' '+'-idenE'+str(t)+' '+str(rmsd_permutation[j][t-1])+ \
                     ' '+'-errtE'+str(t)+' rmsd '  
                 os.chdir("./"+directory)
                 f = open("output.txt", "a")
 
                 #print(cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels)
                 print(cl)
-                process = Popen('srun -n 1 --mem=5000 --gres=craynetwork:0 --cpus-per-task='+coreNumber+ '-o %J.log shifter /img/load_everything.sh python MR_pip.py -rfl ' +rfl_file+' '+cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path)
+                process = Popen('srun -n 1 --mem=10000 --gres=craynetwork:0 --cpus-per-task='+coreNumber+ '-o %J.log shifter /img/load_everything.sh python '+MR_pip+ ' -rfl ' +rfl_file+' '+cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path)
+                
                 #comment these lines out if you want parallel job execution
                 if debug == True:
                     out,err = process.communicate()
                     print(out)
                     print(err)
 
+                process_list.append(process)
+                print('Submitted', datetime.datetime.now())
+                time.sleep(10)
+
                 #os.system('bsub -q '+computeQueue+' -n '+coreNumber+' -o %J.log python MR_pip.py -rfl '+rfl_file+' '+cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path+' -cpus '+coreNumber)
                 os.chdir("../../..")
+exit_codes = [p.wait() for p in process_list]
+print(exit_codes)
