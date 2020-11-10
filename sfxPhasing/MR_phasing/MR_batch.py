@@ -80,7 +80,7 @@ else:
 
 if args.shifter:
     print('You have chosen to use shifter to run the phasing part')
-    command_prefix = 'srun -N 1 -n 1 shifter /img/load_everything.sh'
+    command_prefix = 'srun -N 1 -n 1 shifter /img/entrypoint.sh'
 else:
     print('You have chosen to run using a conda env')
     command_prefix = 'srun -n 1'
@@ -236,7 +236,8 @@ if component_num == 1:
                 #os.system('cp MR_pip.py'+' '+rfl_file+' '+pdb_list[0]+' '+seq_list[0]+' '+'FILE_SETUP.json'+' '+directory)
                 os.chdir("./"+directory)
 
-                process = subprocess.Popen('srun -n 1 --mem=10000 --gres=craynetwork:0 --cpus-per-task='+coreNumber+' -o %J.log shifter /img/load_everything.sh python  '+MR_pip+ ' -rfl '+rfl_file+' -pdbE1 '+pdb_list_input+' -seq1 '+seq_list_input+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path , stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+                process = subprocess.Popen('srun -n 1 --mem=10000 --gres=craynetwork:0 --cpus-per-task='+coreNumber+' -o phasing-%J.log -e phasing-%J.err shifter /img/entrypoint.sh python  '+MR_pip+ ' -rfl '+rfl_file+' -pdbE1 '+pdb_list_input+' -seq1 '+seq_list_input+' -idenE1 '+str(j)+' -errtE1 rmsd -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path , stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True)
+                print('yes')
                 #comment these lines out if you want parallel job execution
                 if debug == True:
                     out, err = process.communicate()
@@ -292,7 +293,7 @@ elif component_num > 1:
 
                 #print(cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels)
                 print(cl)
-                process = Popen('srun -n 1 --mem=10000 --gres=craynetwork:0 --cpus-per-task='+coreNumber+ '-o %J.log shifter /img/load_everything.sh python '+MR_pip+ ' -rfl ' +rfl_file+' '+cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path)
+                process = Popen('srun -n 1 --mem=10000 --gres=craynetwork:0 --cpus-per-task='+coreNumber+ '-o phasing-%J.log -e phasing-%J.err shifter /img/load_everything.sh python '+MR_pip+ ' -rfl ' +rfl_file+' '+cl+' -c '+str(i)+' -res '+str(k)+' -labin '+data_labels+' -P '+original_path)
                 
                 #comment these lines out if you want parallel job execution
                 if debug == True:
